@@ -4,7 +4,7 @@ github:              "dpkatz/HaskellGBM"
 license:             BSD3
 author:              "Daniel Philip Katz"
 maintainer:          "dpkatz@gmail.com"
-copyright:           "Copyright: (c) 2017 Daniel Philip Katz"
+copyright:           "Copyright: (c) 2018 Daniel Philip Katz"
 
 extra-source-files:
 - README.md
@@ -21,20 +21,17 @@ description:         Please see the README on Github at <https://github.com/dpka
 
 dependencies:
 - base >= 4.7 && < 5
+- bytestring
+- formatting
+- hashable
+- path
+- refined
+- text
+- typed-process
+- unordered-containers
 
 library:
   source-dirs: src
-
-executables:
-  HaskellGBM-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - HaskellGBM
 
 tests:
   HaskellGBM-test:
