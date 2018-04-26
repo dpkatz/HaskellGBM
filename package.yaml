@@ -1,0 +1,48 @@
+name:                HaskellGBM
+version:             0.1.0.0
+github:              "dpkatz/HaskellGBM"
+license:             BSD3
+author:              "Daniel Philip Katz"
+maintainer:          "dpkatz@gmail.com"
+copyright:           "Copyright: (c) 2017 Daniel Philip Katz"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Unclassified
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/dpkatz/HaskellGBM#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  HaskellGBM-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - HaskellGBM
+
+tests:
+  HaskellGBM-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - HaskellGBM
