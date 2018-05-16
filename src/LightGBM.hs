@@ -87,6 +87,9 @@ data Model = Model
   { modelPath :: FilePath
   } deriving (Eq, Show)
 
+lightgbmExe :: String
+lightgbmExe = "lightgbm"
+
 -- | Train a new model and persist it to a file.
 trainNewModel ::
      FilePath -- ^ Where to save the new model
@@ -96,8 +99,7 @@ trainNewModel ::
   -> Natural -- ^ Number of training rounds
   -> IO Model
 trainNewModel modelOutputPath trainingParams trainingData validationData numRounds = do
-  let exec = "/Users/dkatz/dev/LightGBM/lightgbm"
-      dataParams = [P.HasHeader (getHeader . hasHeader $ trainingData)]
+  let dataParams = [P.HasHeader (getHeader . hasHeader $ trainingData)]
       runParams =
         [ P.Task P.Train
         , P.TrainingData (dataPath trainingData)
@@ -105,7 +107,7 @@ trainNewModel modelOutputPath trainingParams trainingData validationData numRoun
         , P.Iterations numRounds
         , P.OutputModel modelOutputPath
         ]
-  _ <- CLW.run exec $ concat [runParams, trainingParams, dataParams]
+  _ <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
   return $ Model modelOutputPath
 
 -- | Persisted models can be loaded up and used for prediction.
@@ -125,12 +127,11 @@ predict ::
   -> FilePath -- ^ Where to persist the prediction outputs
   -> IO ()
 predict model inputData predictionOutputPath = do
-  let exec = "/Users/dkatz/dev/LightGBM/lightgbm"
-      runParams =
+  let runParams =
         [ P.Task P.Predict
         , P.InputModel $ modelPath model
         , P.PredictionData $ dataPath inputData
         , P.OutputResult predictionOutputPath
         ]
-  _ <- CLW.run exec runParams
+  _ <- CLW.run lightgbmExe runParams
   return ()
