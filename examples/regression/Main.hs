@@ -5,19 +5,12 @@
 module Main where
 
 import           Refined (refineTH)
-import           System.Directory as SD
+import qualified System.Directory as SD
 import           System.FilePath ((</>))
 
 import qualified LightGBM as LGBM
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils (fileDiff)
-
-workingDir :: FilePath
-workingDir =
-  "/Users/dkatz/dev/haskell/hLightGBM/examples/regression"
-
-modelName :: String
-modelName = "LightGBM_model.txt"
 
 trainParams :: [P.Param]
 trainParams =
@@ -37,22 +30,22 @@ loadData :: FilePath -> LGBM.DataSet
 loadData = LGBM.loadDataFromFile (LGBM.HasHeader False)
 
 main :: IO ()
-main =
-  withCurrentDirectory
-    workingDir
-    (do let trainingData = loadData (workingDir </> "regression.train")
-            testData = loadData (workingDir </> "regression.test")
-            modelFile = workingDir </> modelName
-            predictionFile = workingDir </> "LightGBM_predict_result.txt"
+main = do
+  cwd <- SD.getCurrentDirectory
+  SD.withCurrentDirectory
+    (cwd </> "examples" </> "regression")
+    (do let trainingData = loadData "regression.train"
+            testData = loadData "regression.test"
+            modelName = "LightGBM_model.txt"
+            predictionFile = "LightGBM_predict_result.txt"
 
         model <-
-          LGBM.trainNewModel modelFile trainParams trainingData testData 100
+          LGBM.trainNewModel modelName trainParams trainingData testData 100
 
         LGBM.predict model testData predictionFile
 
-        modelB <- fileDiff modelName (workingDir </> "golden_model.txt")
-        modelP <-
-          fileDiff predictionFile (workingDir </> "golden_prediction.txt")
+        modelB <- fileDiff modelName "golden_model.txt"
+        modelP <- fileDiff predictionFile "golden_prediction.txt"
         putStrLn $
           case (modelB, modelP) of
             (True, True) -> "Matched!"
