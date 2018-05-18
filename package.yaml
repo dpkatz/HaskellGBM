@@ -1,7 +1,7 @@
 name:                HaskellGBM
 version:             0.1.0.0
 github:              "dpkatz/HaskellGBM"
-license:             BSD3
+license:             MIT
 author:              "Daniel Philip Katz"
 maintainer:          "dpkatz@gmail.com"
 copyright:           "Copyright: (c) 2018 Daniel Philip Katz"
