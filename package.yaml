@@ -28,6 +28,7 @@ dependencies:
 - hashable
 - path
 - refined
+- say
 - text
 - typed-process
 - unordered-containers

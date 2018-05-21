@@ -97,7 +97,7 @@ trainNewModel ::
   -> DataSet -- ^ Training data
   -> DataSet -- ^ Testing data
   -> Natural -- ^ Number of training rounds
-  -> IO Model
+  -> IO (Either CLW.ErrLog Model)
 trainNewModel modelOutputPath trainingParams trainingData validationData numRounds = do
   let dataParams = [P.HasHeader (getHeader . hasHeader $ trainingData)]
       runParams =
@@ -107,8 +107,8 @@ trainNewModel modelOutputPath trainingParams trainingData validationData numRoun
         , P.Iterations numRounds
         , P.OutputModel modelOutputPath
         ]
-  _ <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
-  return $ Model modelOutputPath
+  runlog <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
+  return $ either Left (\_ -> Right $ Model modelOutputPath) runlog
 
 -- | Persisted models can be loaded up and used for prediction.
 loadModelFromFile :: FilePath -> Model

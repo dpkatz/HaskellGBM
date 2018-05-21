@@ -236,10 +236,10 @@ mkOptionString (P.ConvertModelLanguage l) =
 mkOptionString (P.ConvertModelOutput f) = ["convert_model=" ++ f]
 
 -- | A transcript of the stdout output of running LightGBM
-newtype OutLog = OutLog T.Text
+newtype OutLog = OutLog T.Text deriving Show
 
 -- | A transcript of the stderr output of running LightGBM
-newtype ErrLog = ErrLog T.Text
+newtype ErrLog = ErrLog T.Text deriving Show
 
 -- | Run the LightGBM executable with appropriate parameters
 run ::

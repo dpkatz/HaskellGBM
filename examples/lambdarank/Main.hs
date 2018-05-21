@@ -1,10 +1,12 @@
 -- | LambdaRank example (taken from the LightGBM repo)
 
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
 import           Refined (refineTH)
+import           Say (say)
 import qualified System.Directory as SD
 import           System.FilePath ((</>))
 
@@ -42,11 +44,13 @@ main = do
         model <-
           LGBM.trainNewModel modelName trainParams trainingData testData 100
 
-        LGBM.predict model testData predictionFile
+        case model of
+          Left e -> print e
+          Right m -> LGBM.predict m testData predictionFile
 
         modelB <- fileDiff modelName "golden_model.txt"
         modelP <- fileDiff predictionFile "golden_prediction.txt"
-        putStrLn $
+        say $
           case (modelB, modelP) of
             (True, True) -> "Matched!"
             (False, False) -> "Model and Predictions changed"
