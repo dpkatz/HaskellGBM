@@ -112,6 +112,10 @@ mkDartString (P.UniformDrop b) = "uniform_drop=" ++ show b
 mkDartString (P.XGBoostDARTMode b) = "xgboost_dart_mode=" ++ show b
 mkDartString (P.DropSeed b) = "drop_seed=" ++ show b
 
+colSelPrefix :: P.ColumnSelector -> String
+colSelPrefix (P.Index _) = ""
+colSelPrefix (P.ColName _) = "name:"
+
 -- | Construct the option string for the command.
 mkOptionString :: P.Param -> [String]
 mkOptionString (P.ConfigFile f) = ["config=" ++ show f]
@@ -182,11 +186,13 @@ mkOptionString (P.TwoRoundLoading b) = ["two_round=" ++ show b]
 mkOptionString (P.SaveBinary b) = ["save_binary=" ++ show b]
 mkOptionString (P.Verbosity v) = ["verbosity=" ++ verbosityPMap M.! v]
 mkOptionString (P.HasHeader b) = ["header=" ++ show b]
-mkOptionString (P.LabelColumn c) = ["label=" ++ P.colSelArgument c]
+mkOptionString (P.LabelColumn c) =
+  ["label=" ++ colSelPrefix c ++ P.colSelArgument c]
 mkOptionString (P.WeightColumn c) = ["weight=" ++ P.colSelArgument c]
 mkOptionString (P.QueryColumn c) = ["query=" ++ P.colSelArgument c]
 mkOptionString (P.IgnoreColumns cs) =
-  ["ignore_column=" ++ intercalate "," (map P.colSelArgument cs)]
+  let prefix = colSelPrefix (head cs)
+   in ["ignore_column=" ++ prefix ++ intercalate "," (map P.colSelArgument cs)]
 mkOptionString (P.CategoricalFeatures cs) =
   ["categorical_feature=" ++ intercalate "," (map P.colSelArgument cs)]
 mkOptionString (P.PredictRawScore b) = ["predict_raw_score=" ++ show b]
