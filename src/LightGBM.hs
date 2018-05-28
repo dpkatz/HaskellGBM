@@ -127,11 +127,12 @@ predict ::
   -> FilePath -- ^ Where to persist the prediction outputs
   -> IO ()
 predict model inputData predictionOutputPath = do
-  let runParams =
+  let dataParams = [P.HasHeader (getHeader . hasHeader $ inputData)]
+      runParams =
         [ P.Task P.Predict
         , P.InputModel $ modelPath model
         , P.PredictionData $ dataPath inputData
         , P.OutputResult predictionOutputPath
         ]
-  _ <- CLW.run lightgbmExe runParams
+  _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
   return ()
