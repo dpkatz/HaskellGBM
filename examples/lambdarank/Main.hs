@@ -12,7 +12,7 @@ import           System.FilePath ((</>))
 
 import qualified LightGBM as LGBM
 import qualified LightGBM.Parameters as P
-import           LightGBM.Utils (fileDiff)
+import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =

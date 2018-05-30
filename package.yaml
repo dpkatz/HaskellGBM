@@ -22,6 +22,7 @@ description:         Please see the README on Github at <https://github.com/dpka
 dependencies:
 - base >= 4.7 && < 5
 - bytestring
+- cassava
 - directory
 - filepath
 - formatting
@@ -31,6 +32,7 @@ dependencies:
 - text
 - typed-process
 - unordered-containers
+- vector
 
 library:
   source-dirs: src

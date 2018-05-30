@@ -35,7 +35,11 @@ import Data.Hashable (Hashable)
 import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 
-import LightGBM.Utils (OneToTwoLeftSemiClosed, PositiveInt, ProperFraction)
+import LightGBM.Utils.Types
+  ( OneToTwoLeftSemiClosed
+  , PositiveInt
+  , ProperFraction
+  )
 
 -- | Parameters control the behavior of lightGBM.
 data Param

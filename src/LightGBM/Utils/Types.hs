@@ -7,19 +7,14 @@
 -- orphan-instance warning for the Hashable instance of the refined
 -- types.
 
-module LightGBM.Utils
+module LightGBM.Utils.Types
   (
     -- * Refined Types
     OneToTwoLeftSemiClosed
   , ProperFraction
   , PositiveInt
-    -- * Testing functions
-  , fileDiff
   ) where
 
-import           Control.Applicative (liftA2)
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Function (on)
 import           Data.Hashable (Hashable, hashWithSalt)
 import qualified Refined as R
 
@@ -36,7 +31,3 @@ type PositiveInt = R.Refined R.Positive Int
 
 instance (Hashable a, R.Predicate p a) => Hashable (R.Refined p a) where
   hashWithSalt salt refinedA = hashWithSalt salt (R.unrefine refinedA)
-
--- | Determine if two files are the same (byte identical)
-fileDiff :: FilePath -> FilePath -> IO Bool
-fileDiff = liftA2 (==) `on` BSL.readFile
