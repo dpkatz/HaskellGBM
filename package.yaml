@@ -26,7 +26,6 @@ dependencies:
 - filepath
 - formatting
 - hashable
-- path
 - refined
 - say
 - text
