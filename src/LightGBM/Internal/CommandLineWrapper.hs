@@ -194,7 +194,8 @@ mkOptionString (P.IgnoreColumns cs) =
   let prefix = colSelPrefix (head cs)
    in ["ignore_column=" ++ prefix ++ intercalate "," (map P.colSelArgument cs)]
 mkOptionString (P.CategoricalFeatures cs) =
-  ["categorical_feature=" ++ intercalate "," (map P.colSelArgument cs)]
+  let prefix = colSelPrefix (head cs)
+  in ["categorical_feature=" ++ prefix ++ intercalate "," (map P.colSelArgument cs)]
 mkOptionString (P.PredictRawScore b) = ["predict_raw_score=" ++ show b]
 mkOptionString (P.PredictLeafIndex b) = ["predict_leaf_index=" ++ show b]
 mkOptionString (P.PredictContrib b) = ["predict_contrib=" ++ show b]

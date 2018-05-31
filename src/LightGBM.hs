@@ -36,6 +36,9 @@
 -- >      outputFile = "/path/to/prediction_outputs"
 -- >  predict model newData outputFile
 --
+-- Note that in current versions of LightGBM, categorical features
+-- must be encoded as 'Int's.
+--
 module LightGBM
   ( -- * Data Handling
     loadDataFromFile
