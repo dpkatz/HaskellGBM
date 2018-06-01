@@ -3,17 +3,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module ConvertData (csvFilter) where
+module ConvertData (csvFilter, testFilter, predsToKaggleFormat) where
 
-import qualified Data.Foldable as Foldable
 import           Control.Exception (IOException)
 import qualified Control.Exception as Exception
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Csv ((.:), (.=))
 import qualified Data.Csv as CSV
+import qualified Data.Foldable as Foldable
+import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
+import           System.IO (Handle)
+
+import           LightGBM.Utils.Csv (readColumn)
 
 -- Parsing the Titanic data
 data Sex
@@ -32,9 +36,8 @@ newtype Survived =
   Survived Bool
   deriving (Eq, Show, Ord)
 
-data PassengerRecord = PR
+data PassengerData = PD
   { passengerID :: Int
-  , survived :: Survived
   , passengerClass :: Int
   , name :: String
   , sex :: Sex
@@ -42,9 +45,14 @@ data PassengerRecord = PR
   , siblingsAndSpouses :: Int
   , parentsAndChildren :: Int
   , ticket :: String
-  , fare :: Double
+  , fare :: Maybe Double
   , cabin :: Maybe String
   , embarkationPoint :: Embarkation
+  } deriving (Eq, Show)
+
+data PassengerRecord = PR
+  { passengerData :: PassengerData
+  , survived :: Survived
   } deriving (Eq, Show)
 
 instance CSV.FromField Survived where
@@ -79,11 +87,10 @@ instance CSV.ToField Embarkation where
   toField Southampton = "2"
   toField (Other _) = "3"
 
-instance CSV.FromNamedRecord PassengerRecord where
+instance CSV.FromNamedRecord PassengerData where
   parseNamedRecord r =
-    PR
+    PD
     <$> r .: "PassengerId"
-    <*> r .: "Survived"
     <*> r .: "Pclass"
     <*> r .: "Name"
     <*> r .: "Sex"
@@ -95,35 +102,53 @@ instance CSV.FromNamedRecord PassengerRecord where
     <*> r .: "Cabin"
     <*> r .: "Embarked"
 
+instance CSV.FromNamedRecord PassengerRecord where
+  parseNamedRecord r = PR <$> CSV.parseNamedRecord r <*> r .: "Survived"
+
 -- | When writing the output CSV, we want to strip out irrelevant
--- features (like name and passengerID and cabin) and convert the
--- categorical features into integral values (which is what LightGBM
--- requires at the moment).
+-- features (like name and cabin) and convert the categorical features
+-- into integral values (which is what LightGBM requires at the
+-- moment).
+instance CSV.ToNamedRecord PassengerData where
+  toNamedRecord PD {..} =
+    CSV.namedRecord
+    [ "PassengerId" .= passengerID
+    , "Pclass" .= passengerClass
+    , "Sex" .= sex
+    , "Age" .= age
+    , "SibSp" .= siblingsAndSpouses
+    , "Parch" .= parentsAndChildren
+    , "Fare" .= fare
+    , "Embarked" .= embarkationPoint
+    ]
+
 instance CSV.ToNamedRecord PassengerRecord where
   toNamedRecord PR {..} =
-    CSV.namedRecord
-      [ "Survived" .= survived
-      , "Pclass" .= passengerClass
-      , "Sex" .= sex
-      , "Age" .= age
-      , "SibSp" .= siblingsAndSpouses
-      , "Parch" .= parentsAndChildren
-      , "Fare" .= fare
-      , "Embarked" .= embarkationPoint
-      ]
+    CSV.namedRecord ["Survived" .= survived] <> CSV.toNamedRecord passengerData
+
+instance CSV.DefaultOrdered PassengerData where
+  headerOrder _ =
+    CSV.header
+      ["PassengerId", "Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]
 
 instance CSV.DefaultOrdered PassengerRecord where
   headerOrder _ =
     CSV.header
-      ["Survived", "Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]
+      ["Survived", "PassengerId", "Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]
 
-encodeItems :: V.Vector PassengerRecord -> BSL.ByteString
+encodeItems ::
+     (Foldable t, CSV.DefaultOrdered a, CSV.ToNamedRecord a)
+  => t a
+  -> BSL.ByteString
 encodeItems = CSV.encodeDefaultOrderedByName . Foldable.toList
 
 encodeFilteredRecordsToFile ::
-     FilePath -> V.Vector PassengerRecord -> IO (Either String ())
-encodeFilteredRecordsToFile filePath =
-  catchShowIO . BSL.writeFile filePath . encodeItems
+     (Foldable t, CSV.DefaultOrdered a, CSV.ToNamedRecord a)
+  => Handle
+  -> t a
+  -> IO (Either String ())
+encodeFilteredRecordsToFile outHandle =
+  catchShowIO . BSL.hPut outHandle . encodeItems
 
 catchShowIO :: IO a -> IO (Either String a)
 catchShowIO action =
@@ -144,7 +169,33 @@ importNamedCSV filename = do
                    return []
     Right drv -> return . V.toList . snd $ drv
 
-csvFilter :: FilePath -> FilePath -> IO (Either String ())
+csvFilter :: FilePath -> Handle -> IO (Either String ())
 csvFilter initial final = do
-  prs <- V.fromList <$> importNamedCSV initial
+  prs <- V.fromList <$> (importNamedCSV initial :: IO [PassengerRecord])
   encodeFilteredRecordsToFile final prs
+
+testFilter :: FilePath -> Handle -> IO (Either String ())
+testFilter initial final = do
+  prs <- V.fromList <$> importNamedCSV initial :: IO (V.Vector PassengerData)
+  encodeFilteredRecordsToFile final prs
+
+
+
+-- Output to the Kaggle-mandated format for the Titanic competition
+
+data KaggleTitanicRecord = KTR
+  { outPassengerId :: Int
+  , outSurvived :: Int
+  } deriving (Eq, Show)
+
+instance CSV.ToNamedRecord KaggleTitanicRecord where
+  toNamedRecord KTR {..} =
+    CSV.namedRecord ["PassengerId" .= outPassengerId, "Survived" .= outSurvived]
+
+predsToKaggleFormat :: BSL.ByteString -> BSL.ByteString -> BSL.ByteString
+predsToKaggleFormat testData predictions =
+  let passengerIds = readColumn 0 CSV.HasHeader testData :: V.Vector Int
+      preds = V.map round (readColumn 0 CSV.NoHeader predictions :: V.Vector Double)
+      outdata = V.toList $ V.zipWith KTR passengerIds preds
+      header = CSV.header ["PassengerId", "Survived"]
+   in CSV.encodeByName header outdata

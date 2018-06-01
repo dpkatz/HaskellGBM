@@ -11,14 +11,14 @@ import qualified Data.Vector as V
 import           Refined (refineTH)
 import qualified System.Directory as SD
 import           System.FilePath ((</>))
-import           System.IO (hClose)
+import           System.IO (hClose, withFile, IOMode(..))
 import qualified System.IO.Temp as TMP
 
 import qualified LightGBM as LGBM
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils.Csv (readColumn)
 
-import           ConvertData (csvFilter)
+import           ConvertData (csvFilter, predsToKaggleFormat, testFilter)
 
 
 trainParams :: [P.Param]
@@ -35,8 +35,9 @@ trainParams =
   , P.MinSumHessianInLeaf 5.0
   , P.IsSparse True
   , P.LabelColumn $ P.ColName "Survived"
-  , P.CategoricalFeatures $
-    [P.ColName "Pclass", P.ColName "Sex", P.ColName "Embarked"]
+  , P.IgnoreColumns [P.ColName "PassengerId"]
+  , P.CategoricalFeatures
+      [P.ColName "Pclass", P.ColName "Sex", P.ColName "Embarked"]
   ]
 
 loadData :: FilePath -> LGBM.DataSet
@@ -49,31 +50,51 @@ accuracy predictions knowns =
       totalCount = length matches
    in fromIntegral matchCount / fromIntegral totalCount
 
+trainModel :: IO LGBM.Model
+trainModel =
+  TMP.withSystemTempFile "filtered_train" $ \trainFile trainHandle -> do
+    _ <- csvFilter "train_part.csv" trainHandle
+    hClose trainHandle
+    TMP.withSystemTempFile "filtered_val" $ \valFile valHandle -> do
+      _ <- csvFilter "validate_part.csv" valHandle
+      hClose valHandle
+      let trainingData = loadData trainFile
+          validationData = loadData valFile
+          predictionFile = "LightGBM_predict_result.txt"
+          modelName = "LightGBM_model.txt"
+      model <-
+        LGBM.trainNewModel modelName trainParams trainingData validationData 100
+      case model of
+        Left e -> error $ "Error training model:  " ++ show e
+        Right m -> do
+          print $ "Model trained and saved to file:  " ++ modelName
+
+          LGBM.predict m validationData predictionFile
+          predictions <-
+            map read . lines <$> readFile predictionFile :: IO [Double]
+          valData <- BSL.readFile valFile
+          let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
+          print $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)
+
+          return m
+
 main :: IO ()
 main = do
   cwd <- SD.getCurrentDirectory
   SD.withCurrentDirectory
     (cwd </> "examples" </> "titanic")
-    (TMP.withSystemTempFile "filtered_train" $ \trainFile trainHandle -> do
-       hClose trainHandle
-       _ <- csvFilter "train_part.csv" trainFile
-       TMP.withSystemTempFile "filtered_val" $ \valFile valHandle -> do
-         hClose valHandle
-         _ <- csvFilter "validate_part.csv" valFile
-         let trainingData = loadData trainFile
-             testData = loadData valFile
-             predictionFile = "LightGBM_predict_result.txt"
-             modelName = "LightGBM_model.txt"
-         model <-
-           LGBM.trainNewModel modelName trainParams trainingData testData 100
-         case model of
-           Left e -> print e
-           Right m -> do
-             LGBM.predict m testData predictionFile
-             predictions <-
-               map read . lines <$> readFile predictionFile :: IO [Double]
-             valData <- BSL.readFile valFile
-             let knownV = readColumn 0 CSV.HasHeader valData :: V.Vector Int
-                 knowns = V.toList knownV
-             print $
-               "Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double))
+    (do
+        m <- trainModel
+
+        TMP.withSystemTempFile "filtered_test" $ \testFile testHandle -> do
+          _ <- testFilter "test.csv" testHandle
+          hClose testHandle
+          TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
+            hClose predHandle
+            LGBM.predict m (loadData testFile) predFile
+
+            withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
+              testBytes <- BSL.readFile testFile
+              predBytes <- BSL.readFile predFile
+              BSL.hPut submHandle $ predsToKaggleFormat testBytes predBytes
+    )
