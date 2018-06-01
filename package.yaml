@@ -98,3 +98,15 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - HaskellGBM
+
+  doctest:
+    main: DocTest.hs
+    source-dirs: doctest
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - doctest
+    - Glob
+    
