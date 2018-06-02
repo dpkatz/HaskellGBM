@@ -69,9 +69,8 @@ trainModel =
         Right m -> do
           print $ "Model trained and saved to file:  " ++ modelName
 
-          LGBM.predict m validationData predictionFile
-          predictions <-
-            map read . lines <$> readFile predictionFile :: IO [Double]
+          predictionSet <- LGBM.predict m validationData predictionFile
+          predictions <- LGBM.dsToList predictionSet :: IO [Double]
           valData <- BSL.readFile valFile
           let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
           print $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)
@@ -91,7 +90,7 @@ main = do
           hClose testHandle
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
-            LGBM.predict m (loadData testFile) predFile
+            _ <- LGBM.predict m (loadData testFile) predFile
 
             withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
               testBytes <- BSL.readFile testFile

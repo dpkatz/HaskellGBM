@@ -45,7 +45,9 @@ main = do
           LGBM.trainNewModel modelName trainParams trainingData testData 100
         case model of
           Left e -> print e
-          Right m -> LGBM.predict m testData predictionFile
+          Right m -> do
+            _ <- LGBM.predict m testData predictionFile
+            return ()
 
         modelB <- fileDiff modelName "golden_model.txt"
         modelP <- fileDiff predictionFile "golden_prediction.txt"

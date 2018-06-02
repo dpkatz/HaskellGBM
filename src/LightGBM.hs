@@ -44,6 +44,7 @@ module LightGBM
     loadDataFromFile
   , DataSet
   , HasHeader(..)
+  , dsToList
     -- * Models
   , Model
   , trainNewModel
@@ -85,6 +86,10 @@ newtype HasHeader = HasHeader
 loadDataFromFile :: HasHeader -> FilePath -> DataSet
 loadDataFromFile = flip DataSet
 
+-- | Convert a DataSet into a list of records for whatever type is relevant.
+dsToList :: Read a => DataSet -> IO [a]
+dsToList ds =  map read . lines <$> readFile (dataPath ds)
+
 -- | A model to use to make predictions
 data Model = Model
   { modelPath :: FilePath
@@ -117,18 +122,13 @@ trainNewModel modelOutputPath trainingParams trainingData validationData numRoun
 loadModelFromFile :: FilePath -> Model
 loadModelFromFile = Model
 
--- FIXME:
---  - we might want to return the predictions in a better form
---    than just the file...
---  - Duplication of the exec path between predict and
---    train. Use a Reader monad maybe?
 -- | Predict the results of new inputs and persist the results to an
 -- output file.
 predict ::
      Model -- ^ A model to do prediction with
   -> DataSet -- ^ The new input data for prediction
   -> FilePath -- ^ Where to persist the prediction outputs
-  -> IO ()
+  -> IO DataSet -- ^ The prediction output DataSet
 predict model inputData predictionOutputPath = do
   let dataParams = [P.HasHeader (getHeader . hasHeader $ inputData)]
       runParams =
@@ -138,4 +138,4 @@ predict model inputData predictionOutputPath = do
         , P.OutputResult predictionOutputPath
         ]
   _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
-  return ()
+  return $ DataSet predictionOutputPath (HasHeader False)
