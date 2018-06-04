@@ -185,7 +185,7 @@ mkOptionString (P.IsSparse b) = ["is_sparse=" ++ show b]
 mkOptionString (P.TwoRoundLoading b) = ["two_round=" ++ show b]
 mkOptionString (P.SaveBinary b) = ["save_binary=" ++ show b]
 mkOptionString (P.Verbosity v) = ["verbosity=" ++ verbosityPMap M.! v]
-mkOptionString (P.HasHeader b) = ["header=" ++ show b]
+mkOptionString (P.Header b) = ["header=" ++ show b]
 mkOptionString (P.LabelColumn c) =
   ["label=" ++ colSelPrefix c ++ P.colSelArgument c]
 mkOptionString (P.WeightColumn c) = ["weight=" ++ P.colSelArgument c]

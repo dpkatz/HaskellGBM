@@ -11,6 +11,10 @@
 --
 -- The basic usage of the library looks something like this:
 --
+-- >  {-# LANGUAGE TemplateHaskell #-}
+-- >
+-- >  [...]
+-- >
 -- >  import           LightGBM (loadDataFromFile, HasHeader(..), trainNewModel)
 -- >  import qualified LightGBM.Parameters as P
 -- >  import           Refined (refineTH)
@@ -40,102 +44,9 @@
 -- must be encoded as 'Int's.
 --
 module LightGBM
-  ( -- * Data Handling
-    loadDataFromFile
-  , DataSet
-  , HasHeader(..)
-  , dsToList
-    -- * Models
-  , Model
-  , trainNewModel
-  , loadModelFromFile
-    -- * Prediction
-  , predict
+  ( module LightGBM.DataSet
+  , module LightGBM.Model
   ) where
 
-import           Numeric.Natural (Natural)
-
-import qualified LightGBM.Internal.CommandLineWrapper as CLW
-import qualified LightGBM.Parameters as P
-
--- N.B.  Right now it's just a data file, but it'll become more
--- (e.g. an hmatrix or some such) as we move forward.
--- | A set of data to use for training or prediction.
-data DataSet = DataSet
-  { dataPath :: FilePath
-  , hasHeader :: HasHeader
-  } deriving (Eq, Show)
-
--- | Describes whether a CSV data file has a header row or not.
-newtype HasHeader = HasHeader
-  { getHeader :: Bool
-  } deriving (Eq, Show)
-
--- | Load data from a file.
---
--- LightGBM can read data from CSV or TSV files (or from LibSVM
--- formatted files).
---
--- Note that the LightGBM data file format traditionally consists of
--- putting the output (aka the /labels/) in the first column, and the
--- inputs (aka the /features/) in the subsequent columns.  However,
--- you can instruct LightGBM to
---
---    * use some other column for the labels with the 'P.LabelColumn' parameter, and
---    * ignore some of the feature columns with the 'P.IgnoreColumns' parameter.
-loadDataFromFile :: HasHeader -> FilePath -> DataSet
-loadDataFromFile = flip DataSet
-
--- | Convert a DataSet into a list of records for whatever type is relevant.
-dsToList :: Read a => DataSet -> IO [a]
-dsToList ds =  map read . lines <$> readFile (dataPath ds)
-
--- | A model to use to make predictions
-data Model = Model
-  { modelPath :: FilePath
-  } deriving (Eq, Show)
-
-lightgbmExe :: String
-lightgbmExe = "lightgbm"
-
--- | Train a new model and persist it to a file.
-trainNewModel ::
-     FilePath -- ^ Where to save the new model
-  -> [P.Param] -- ^ Training parameters
-  -> DataSet -- ^ Training data
-  -> DataSet -- ^ Testing data
-  -> Natural -- ^ Number of training rounds
-  -> IO (Either CLW.ErrLog Model)
-trainNewModel modelOutputPath trainingParams trainingData validationData numRounds = do
-  let dataParams = [P.HasHeader (getHeader . hasHeader $ trainingData)]
-      runParams =
-        [ P.Task P.Train
-        , P.TrainingData (dataPath trainingData)
-        , P.ValidationData (dataPath validationData)
-        , P.Iterations numRounds
-        , P.OutputModel modelOutputPath
-        ]
-  runlog <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
-  return $ either Left (\_ -> Right $ Model modelOutputPath) runlog
-
--- | Persisted models can be loaded up and used for prediction.
-loadModelFromFile :: FilePath -> Model
-loadModelFromFile = Model
-
--- | Predict the results of new inputs and persist the results to an
--- output file.
-predict ::
-     Model -- ^ A model to do prediction with
-  -> DataSet -- ^ The new input data for prediction
-  -> FilePath -- ^ Where to persist the prediction outputs
-  -> IO DataSet -- ^ The prediction output DataSet
-predict model inputData predictionOutputPath = do
-  let dataParams = [P.HasHeader (getHeader . hasHeader $ inputData)]
-      runParams =
-        [ P.Task P.Predict
-        , P.InputModel $ modelPath model
-        , P.PredictionData $ dataPath inputData
-        , P.OutputResult predictionOutputPath
-        ]
-  _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
-  return $ DataSet predictionOutputPath (HasHeader False)
+import LightGBM.DataSet
+import LightGBM.Model

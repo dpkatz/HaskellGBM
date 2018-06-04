@@ -11,9 +11,9 @@ import qualified System.Directory as SD
 import           System.FilePath ((</>))
 
 import qualified LightGBM as LGBM
+import qualified LightGBM.DataSet as DS
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils.Test (fileDiff)
-
 
 trainParams :: [P.Param]
 trainParams =
@@ -31,8 +31,8 @@ trainParams =
   ]
 
 -- The data files for this test don't have any headers
-loadData :: FilePath -> LGBM.DataSet
-loadData = LGBM.loadDataFromFile (LGBM.HasHeader False)
+loadData :: FilePath -> DS.DataSet
+loadData = DS.loadDataFromFile (DS.HasHeader False)
 
 main :: IO ()
 main = do

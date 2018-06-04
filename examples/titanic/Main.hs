@@ -15,6 +15,7 @@ import           System.IO (hClose, withFile, IOMode(..))
 import qualified System.IO.Temp as TMP
 
 import qualified LightGBM as LGBM
+import qualified LightGBM.DataSet as DS
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils.Csv (readColumn)
 
@@ -40,8 +41,8 @@ trainParams =
       [P.ColName "Pclass", P.ColName "Sex", P.ColName "Embarked"]
   ]
 
-loadData :: FilePath -> LGBM.DataSet
-loadData = LGBM.loadDataFromFile (LGBM.HasHeader True)
+loadData :: FilePath -> DS.DataSet
+loadData = DS.loadDataFromFile (DS.HasHeader True)
 
 accuracy :: (Eq a, Fractional f) => [a] -> [a] -> f
 accuracy predictions knowns =
@@ -70,7 +71,7 @@ trainModel =
           print $ "Model trained and saved to file:  " ++ modelName
 
           predictionSet <- LGBM.predict m validationData predictionFile
-          predictions <- LGBM.dsToList predictionSet :: IO [Double]
+          predictions <- DS.toList predictionSet :: IO [Double]
           valData <- BSL.readFile valFile
           let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
           print $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)

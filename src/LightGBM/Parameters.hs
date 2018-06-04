@@ -89,7 +89,7 @@ data Param
   | TwoRoundLoading Bool
   | SaveBinary Bool
   | Verbosity VerbosityLevel
-  | HasHeader Bool -- ^ True if the input data has a header
+  | Header Bool -- ^ True if the input data has a header
   | LabelColumn ColumnSelector -- ^ Which column has the labels
   | WeightColumn ColumnSelector -- ^ Which column has the weights
   | QueryColumn ColumnSelector
