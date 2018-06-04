@@ -34,6 +34,7 @@
 -- >                       , P.MinSumHessianInLeaf 5.0
 -- >                       , P.IsSparse True
 -- >                       ]
+-- >
 -- >  model <- trainNewModel modelFile trainingParams trainingData validationData 100
 -- >
 -- >  let newData = loadDataFromFile (HasHeader False) "/path/to/inputs_for_prediction"
