@@ -61,4 +61,4 @@ predict model inputData predictionOutputPath = do
         , P.OutputResult predictionOutputPath
         ]
   _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
-  return $ DS.DataSet predictionOutputPath (DS.HasHeader False)
+  return $ DS.CSVFile predictionOutputPath (DS.HasHeader False)

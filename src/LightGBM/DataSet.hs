@@ -7,10 +7,12 @@ module LightGBM.DataSet (
   , HasHeader(..)
   , toList) where
 
--- N.B.  Right now it's just a data file, but it'll become more
--- (e.g. an hmatrix or some such) as we move forward.
+-- N.B.  Right now it's just a data file, but we can add better types
+-- (e.g. some sort of dataframe) as other options as we move forward.
 -- | A set of data to use for training or prediction.
-data DataSet = DataSet
+--
+--
+data DataSet = CSVFile
   { dataPath :: FilePath
   , hasHeader :: HasHeader
   } deriving (Eq, Show)
@@ -33,7 +35,7 @@ newtype HasHeader = HasHeader
 --    * use some other column for the labels with the 'P.LabelColumn' parameter, and
 --    * ignore some of the feature columns with the 'P.IgnoreColumns' parameter.
 loadDataFromFile :: HasHeader -> FilePath -> DataSet
-loadDataFromFile = flip DataSet
+loadDataFromFile = flip CSVFile
 
 -- FIXME - this is broken for anything with more than one column.
 -- This needs to use something like Cassava or Frame more
