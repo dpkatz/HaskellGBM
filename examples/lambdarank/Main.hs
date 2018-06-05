@@ -43,7 +43,7 @@ main = do
             predictionFile = "LightGBM_predict_result.txt"
 
         model <-
-          LGBM.trainNewModel modelName trainParams trainingData [testData] 100
+          LGBM.trainNewModel modelName trainParams trainingData [testData]
 
         case model of
           Left e -> print e

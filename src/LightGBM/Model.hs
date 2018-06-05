@@ -7,7 +7,6 @@ module LightGBM.Model
   , predict
   ) where
 
-import           Numeric.Natural (Natural)
 import           System.IO.Temp (emptySystemTempFile)
 
 import qualified LightGBM.DataSet as DS
@@ -28,15 +27,13 @@ trainNewModel ::
   -> [P.Param] -- ^ Training parameters
   -> DS.DataSet -- ^ Training data
   -> [DS.DataSet] -- ^ Testing data
-  -> Natural -- ^ Number of training rounds
   -> IO (Either CLW.ErrLog Model)
-trainNewModel modelOutputPath trainingParams trainingData validationData numRounds = do
+trainNewModel modelOutputPath trainingParams trainingData validationData = do
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ trainingData)]
       runParams =
         [ P.Task P.Train
         , P.TrainingData (DS.dataPath trainingData)
         , P.ValidationData $ fmap DS.dataPath validationData
-        , P.Iterations numRounds
         , P.OutputModel modelOutputPath
         ]
   runlog <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
