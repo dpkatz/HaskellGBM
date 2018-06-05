@@ -42,7 +42,7 @@ trainParams =
   ]
 
 loadData :: FilePath -> DS.DataSet
-loadData = DS.loadDataFromFile (DS.HasHeader True)
+loadData = DS.readCsvFile (DS.HasHeader True)
 
 accuracy :: (Eq a, Fractional f) => [a] -> [a] -> f
 accuracy predictions knowns =
@@ -72,7 +72,7 @@ trainModel =
 
           predictionSet <- LGBM.predict m validationData
           predictions <- DS.getColumn 0 predictionSet :: IO [Double]
-          LGBM.writeDataToFile predictionFile predictionSet
+          LGBM.writeCsvFile predictionFile predictionSet
 
           valData <- BSL.readFile valFile
           let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
@@ -91,7 +91,7 @@ main = do
           hClose testHandle
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
-            _ <- LGBM.writeDataToFile predFile =<<
+            _ <- LGBM.writeCsvFile predFile =<<
                  LGBM.predict m (loadData testFile)
             withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
               testBytes <- BSL.readFile testFile

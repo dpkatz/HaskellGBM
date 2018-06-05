@@ -30,7 +30,7 @@ trainParams =
 
 -- The data files for this test don't have any headers
 loadData :: FilePath -> DS.DataSet
-loadData = DS.loadDataFromFile (DS.HasHeader False)
+loadData = DS.readCsvFile (DS.HasHeader False)
 
 main :: IO ()
 main = do
@@ -47,7 +47,7 @@ main = do
         case model of
           Left e -> print e
           Right m -> do
-            _ <- LGBM.writeDataToFile predictionFile =<< LGBM.predict m testData
+            _ <- LGBM.writeCsvFile predictionFile =<< LGBM.predict m testData
             return ()
 
         modelB <- fileDiff modelName "golden_model.txt"

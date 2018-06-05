@@ -15,13 +15,16 @@
 -- >
 -- >  [...]
 -- >
--- >  import           LightGBM (loadDataFromFile, HasHeader(..), trainNewModel)
+-- >  import           LightGBM ( writeCsvFile
+-- >                            , readCsvFile
+-- >                            , HasHeader(..)
+-- >                            , trainNewModel)
 -- >  import qualified LightGBM.Parameters as P
 -- >  import           Refined (refineTH)
 -- >
 -- >  let modelFile = "/path/to/model/output"
--- >      trainingData = loadDataFromFile (HasHeader False) "/path/to/training/data"
--- >      validationData = loadDataFromFile (HasHeader False) "/path/to/validation/data"
+-- >      trainingData = readCsvFile (HasHeader False) "/path/to/training/data"
+-- >      validationData = readCsvFile (HasHeader False) "/path/to/validation/data"
 -- >      trainingParams = [ P.App P.Binary
 -- >                       , P.Metric [P.BinaryLogloss, P.AUC]
 -- >                       , P.TrainingMetric True
@@ -37,9 +40,9 @@
 -- >
 -- >  model <- trainNewModel modelFile trainingParams trainingData validationData 100
 -- >
--- >  let newData = loadDataFromFile (HasHeader False) "/path/to/inputs_for_prediction"
+-- >  let newData = readCsvFile (HasHeader False) "/path/to/inputs_for_prediction"
 -- >      outputFile = "/path/to/prediction_outputs"
--- >  predict model newData outputFile
+-- >  predict model newData >>= writeCsvFile outputFile
 --
 -- Note that in current versions of LightGBM, categorical features
 -- must be encoded as 'Int's.

@@ -4,8 +4,8 @@ module LightGBM.DataSet (
   -- * Data Handling
     DataSet (..)
   , HasHeader(..)
-  , loadDataFromFile
-  , writeDataToFile
+  , readCsvFile
+  , writeCsvFile
   , getColumn) where
 
 import qualified Data.ByteString.Lazy as BSL
@@ -42,14 +42,14 @@ newtype HasHeader = HasHeader
 --
 --    * use some other column for the labels with the 'P.LabelColumn' parameter, and
 --    * ignore some of the feature columns with the 'P.IgnoreColumns' parameter.
-loadDataFromFile :: HasHeader -> FilePath -> DataSet
-loadDataFromFile = flip CSVFile
+readCsvFile :: HasHeader -> FilePath -> DataSet
+readCsvFile = flip CSVFile
 
 -- | Write a DataSet out to a CSV file
-writeDataToFile :: FilePath     -- ^ Output path
+writeCsvFile :: FilePath     -- ^ Output path
                 -> DataSet      -- ^ The data to persist
                 -> IO ()
-writeDataToFile outPath CSVFile {..} = renameFile dataPath outPath
+writeCsvFile outPath CSVFile {..} = renameFile dataPath outPath
 
 -- | Convert a DataSet into a list of records for whatever type is relevant.
 getColumn :: Read a => Int -> DataSet -> IO [a]
