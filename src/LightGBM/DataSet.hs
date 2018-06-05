@@ -46,9 +46,10 @@ readCsvFile :: HasHeader -> FilePath -> DataSet
 readCsvFile = flip CSVFile
 
 -- | Write a DataSet out to a CSV file
-writeCsvFile :: FilePath     -- ^ Output path
-                -> DataSet      -- ^ The data to persist
-                -> IO ()
+writeCsvFile ::
+     FilePath -- ^ Output path
+  -> DataSet -- ^ The data to persist
+  -> IO ()
 writeCsvFile outPath CSVFile {..} = renameFile dataPath outPath
 
 -- | Convert a DataSet into a list of records for whatever type is relevant.
