@@ -44,13 +44,13 @@ import LightGBM.Utils.Types
 -- | Parameters control the behavior of lightGBM.
 data Param
   = ConfigFile FilePath -- ^ Path to config file
-  | Task TaskType -- ^ Task to perform
-  | App Application -- ^ Application
+  | Task TaskType -- ^ Task to perform (train, predict, etc.)
+  | App Application -- ^ Application (regression, binary classification, etc.)
   | BoostingType Booster -- ^ Booster to apply - by default is 'GBDT'
   | TrainingData FilePath -- ^ Path to training data
-  | ValidationData FilePath -- ^ Path to testing data
+  | ValidationData [FilePath] -- ^ Paths to validation data files (supports multi-validation)
   | PredictionData FilePath -- ^ Path to data to use for a prediction
-  | Iterations Natural
+  | Iterations Natural -- ^ Number of boosting iterations - default is 100
   | LearningRate Double
   | NumLeaves Natural
   | Parallelism ParallelismStyle

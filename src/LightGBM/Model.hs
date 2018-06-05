@@ -27,7 +27,7 @@ trainNewModel ::
      FilePath -- ^ Where to save the new model
   -> [P.Param] -- ^ Training parameters
   -> DS.DataSet -- ^ Training data
-  -> DS.DataSet -- ^ Testing data
+  -> [DS.DataSet] -- ^ Testing data
   -> Natural -- ^ Number of training rounds
   -> IO (Either CLW.ErrLog Model)
 trainNewModel modelOutputPath trainingParams trainingData validationData numRounds = do
@@ -35,7 +35,7 @@ trainNewModel modelOutputPath trainingParams trainingData validationData numRoun
       runParams =
         [ P.Task P.Train
         , P.TrainingData (DS.dataPath trainingData)
-        , P.ValidationData (DS.dataPath validationData)
+        , P.ValidationData $ fmap DS.dataPath validationData
         , P.Iterations numRounds
         , P.OutputModel modelOutputPath
         ]

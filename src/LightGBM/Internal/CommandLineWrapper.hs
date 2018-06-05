@@ -131,7 +131,8 @@ mkOptionString (P.BoostingType (P.DART dartParams)) =
   ["boosting=dart"] ++ map mkDartString dartParams
 mkOptionString (P.BoostingType b) = ["boosting=" ++ (boosterPMap M.! b)]
 mkOptionString (P.TrainingData f) = ["data=" ++ show f]
-mkOptionString (P.ValidationData f) = ["valid=" ++ show f]
+mkOptionString (P.ValidationData fs) =
+  ["valid=" ++ intercalate "," (map show fs)]
 mkOptionString (P.PredictionData f) = ["data=" ++ show f]
 mkOptionString (P.Iterations n) = ["num_iterations=" ++ show n]
 mkOptionString (P.LearningRate d) = ["learning_rate=" ++ show d]

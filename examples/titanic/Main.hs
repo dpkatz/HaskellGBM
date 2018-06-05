@@ -64,7 +64,7 @@ trainModel =
           predictionFile = "LightGBM_predict_result.txt"
           modelName = "LightGBM_model.txt"
       model <-
-        LGBM.trainNewModel modelName trainParams trainingData validationData 100
+        LGBM.trainNewModel modelName trainParams trainingData [validationData] 100
       case model of
         Left e -> error $ "Error training model:  " ++ show e
         Right m -> do
