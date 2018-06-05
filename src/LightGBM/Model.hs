@@ -8,6 +8,7 @@ module LightGBM.Model
   ) where
 
 import           Numeric.Natural (Natural)
+import           System.IO.Temp (emptySystemTempFile)
 
 import qualified LightGBM.DataSet as DS
 import qualified LightGBM.Internal.CommandLineWrapper as CLW
@@ -50,9 +51,9 @@ loadModelFromFile = Model
 predict ::
      Model -- ^ A model to do prediction with
   -> DS.DataSet -- ^ The new input data for prediction
-  -> FilePath -- ^ Where to persist the prediction outputs
   -> IO DS.DataSet -- ^ The prediction output DataSet
-predict model inputData predictionOutputPath = do
+predict model inputData = do
+  predictionOutputPath <- emptySystemTempFile "predictionOutput"
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ inputData)]
       runParams =
         [ P.Task P.Predict
@@ -60,5 +61,6 @@ predict model inputData predictionOutputPath = do
         , P.PredictionData $ DS.dataPath inputData
         , P.OutputResult predictionOutputPath
         ]
+  -- FIXME Handle the error case properly
   _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
   return $ DS.CSVFile predictionOutputPath (DS.HasHeader False)

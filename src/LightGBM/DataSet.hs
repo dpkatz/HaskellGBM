@@ -1,11 +1,19 @@
--- |
+{-# LANGUAGE RecordWildCards #-}
 
 module LightGBM.DataSet (
   -- * Data Handling
-    loadDataFromFile
-  , DataSet (..)
+    DataSet (..)
   , HasHeader(..)
-  , toList) where
+  , loadDataFromFile
+  , writeDataToFile
+  , getColumn) where
+
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Csv as CSV
+import qualified Data.Vector as V
+import           System.Directory (renameFile)
+
+import           LightGBM.Utils.Csv (readColumn)
 
 -- N.B.  Right now it's just a data file, but we can add better types
 -- (e.g. some sort of dataframe) as other options as we move forward.
@@ -37,9 +45,16 @@ newtype HasHeader = HasHeader
 loadDataFromFile :: HasHeader -> FilePath -> DataSet
 loadDataFromFile = flip CSVFile
 
--- FIXME - this is broken for anything with more than one column.
--- This needs to use something like Cassava or Frame more
--- consistently.
+-- | Write a DataSet out to a CSV file
+writeDataToFile :: FilePath     -- ^ Output path
+                -> DataSet      -- ^ The data to persist
+                -> IO ()
+writeDataToFile outPath CSVFile {..} = renameFile dataPath outPath
+
 -- | Convert a DataSet into a list of records for whatever type is relevant.
-toList :: Read a => DataSet -> IO [a]
-toList ds =  map read . lines <$> readFile (dataPath ds)
+getColumn :: Read a => Int -> DataSet -> IO [a]
+getColumn colIndex CSVFile {..} =
+  V.toList . readColumn colIndex (conv hasHeader) <$> BSL.readFile dataPath
+  where
+    conv (HasHeader True) = CSV.HasHeader
+    conv (HasHeader False) = CSV.NoHeader

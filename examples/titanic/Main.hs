@@ -70,8 +70,10 @@ trainModel =
         Right m -> do
           print $ "Model trained and saved to file:  " ++ modelName
 
-          predictionSet <- LGBM.predict m validationData predictionFile
-          predictions <- DS.toList predictionSet :: IO [Double]
+          predictionSet <- LGBM.predict m validationData
+          predictions <- DS.getColumn 0 predictionSet :: IO [Double]
+          LGBM.writeDataToFile predictionFile predictionSet
+
           valData <- BSL.readFile valFile
           let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
           print $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)
@@ -83,18 +85,15 @@ main = do
   cwd <- SD.getCurrentDirectory
   SD.withCurrentDirectory
     (cwd </> "examples" </> "titanic")
-    (do
-        m <- trainModel
-
+    (do m <- trainModel
         TMP.withSystemTempFile "filtered_test" $ \testFile testHandle -> do
           _ <- testFilter "test.csv" testHandle
           hClose testHandle
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
-            _ <- LGBM.predict m (loadData testFile) predFile
-
+            _ <- LGBM.writeDataToFile predFile =<<
+                 LGBM.predict m (loadData testFile)
             withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
               testBytes <- BSL.readFile testFile
               predBytes <- BSL.readFile predFile
-              BSL.hPut submHandle $ predsToKaggleFormat testBytes predBytes
-    )
+              BSL.hPut submHandle $ predsToKaggleFormat testBytes predBytes)

@@ -48,7 +48,7 @@ main = do
         case model of
           Left e -> print e
           Right m -> do
-            _ <- LGBM.predict m testData predictionFile
+            _ <- LGBM.writeDataToFile predictionFile =<< LGBM.predict m testData
             return ()
 
         modelB <- fileDiff modelName "golden_model.txt"
