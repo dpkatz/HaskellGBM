@@ -11,7 +11,7 @@ module LightGBM.DataSet (
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Csv as CSV
 import qualified Data.Vector as V
-import           System.Directory (renameFile)
+import           System.Directory (copyFile)
 
 import           LightGBM.Utils.Csv (readColumn)
 
@@ -50,7 +50,7 @@ writeCsvFile ::
      FilePath -- ^ Output path
   -> DataSet -- ^ The data to persist
   -> IO ()
-writeCsvFile outPath CSVFile {..} = renameFile dataPath outPath
+writeCsvFile outPath CSVFile {..} = copyFile dataPath outPath
 
 -- | Convert a DataSet into a list of records for whatever type is relevant.
 getColumn :: Read a => Int -> DataSet -> IO [a]

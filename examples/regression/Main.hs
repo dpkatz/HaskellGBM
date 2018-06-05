@@ -39,23 +39,17 @@ main = do
     (cwd </> "examples" </> "regression")
     (do let trainingData = loadData "regression.train"
             testData = loadData "regression.test"
-            modelName = "LightGBM_model.txt"
             predictionFile = "LightGBM_predict_result.txt"
 
         model <-
-          LGBM.trainNewModel modelName trainParams trainingData [testData]
+          LGBM.trainNewModel trainParams trainingData [testData]
         case model of
           Left e -> print e
           Right m -> do
-            _ <- LGBM.writeCsvFile predictionFile =<< LGBM.predict m testData
-            return ()
+            LGBM.predict m testData >>= LGBM.writeCsvFile predictionFile
 
-        modelB <- fileDiff modelName "golden_model.txt"
-        modelP <- fileDiff predictionFile "golden_prediction.txt"
-        say $
-          case (modelB, modelP) of
-            (True, True) -> "Matched!"
-            (False, False) -> "Model and Predictions changed"
-            (True, False) -> "Predictions changed"
-            (False, True) -> "Model changed"
+            modelP <- fileDiff predictionFile "golden_prediction.txt"
+            say $ if modelP then "Matched!" else "Predictions changed"
+
+            SD.removeFile predictionFile
     )

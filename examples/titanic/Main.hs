@@ -62,13 +62,13 @@ trainModel =
       let trainingData = loadData trainFile
           validationData = loadData valFile
           predictionFile = "LightGBM_predict_result.txt"
-          modelName = "LightGBM_model.txt"
+          modelFile = "LightGBM_model.txt"
       model <-
-        LGBM.trainNewModel modelName trainParams trainingData [validationData]
+        LGBM.trainNewModel trainParams trainingData [validationData]
       case model of
         Left e -> error $ "Error training model:  " ++ show e
         Right m -> do
-          print $ "Model trained and saved to file:  " ++ modelName
+          _ <- LGBM.writeModelFile modelFile m
 
           predictionSet <- LGBM.predict m validationData
           predictions <- DS.getColumn 0 predictionSet :: IO [Double]

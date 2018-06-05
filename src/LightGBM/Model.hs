@@ -1,12 +1,17 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module LightGBM.Model
   ( -- * Models
     Model
   , trainNewModel
-  , loadModelFromFile
+  , readModelFile
+  , writeModelFile
     -- * Prediction
   , predict
   ) where
 
+import           Data.List (find)
+import           System.Directory (copyFile)
 import           System.IO.Temp (emptySystemTempFile)
 
 import qualified LightGBM.DataSet as DS
@@ -23,25 +28,43 @@ lightgbmExe = "lightgbm"
 
 -- | Train a new model and persist it to a file.
 trainNewModel ::
-     FilePath -- ^ Where to save the new model
-  -> [P.Param] -- ^ Training parameters
+     [P.Param] -- ^ Training parameters
   -> DS.DataSet -- ^ Training data
   -> [DS.DataSet] -- ^ Testing data
   -> IO (Either CLW.ErrLog Model)
-trainNewModel modelOutputPath trainingParams trainingData validationData = do
+trainNewModel trainingParams trainingData validationData = do
+  modelOutputPath <- getModelOutputPath
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ trainingData)]
       runParams =
         [ P.Task P.Train
         , P.TrainingData (DS.dataPath trainingData)
         , P.ValidationData $ fmap DS.dataPath validationData
-        , P.OutputModel modelOutputPath
-        ]
+        ] ++
+        if hasModelOutputPathParam
+          then []
+          else [P.OutputModel modelOutputPath]
   runlog <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
   return $ either Left (\_ -> Right $ Model modelOutputPath) runlog
+  where
+    isOutputModelParam (P.OutputModel _) = True
+    isOutputModelParam _ = False
+    hasModelOutputPathParam =
+      case filter isOutputModelParam trainingParams of
+        [] -> False
+        _ -> True
+    getModelOutputPath =
+      case find isOutputModelParam trainingParams of
+        Just (P.OutputModel path) -> return path
+        _ -> emptySystemTempFile "modelOutput"
+
+
+-- | Models can be written out to a file
+writeModelFile :: FilePath -> Model -> IO ()
+writeModelFile outPath Model {..} = copyFile modelPath outPath
 
 -- | Persisted models can be loaded up and used for prediction.
-loadModelFromFile :: FilePath -> Model
-loadModelFromFile = Model
+readModelFile :: FilePath -> IO Model
+readModelFile = return . Model
 
 -- | Predict the results of new inputs and persist the results to an
 -- output file.

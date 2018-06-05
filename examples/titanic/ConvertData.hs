@@ -195,7 +195,8 @@ instance CSV.ToNamedRecord KaggleTitanicRecord where
 predsToKaggleFormat :: BSL.ByteString -> BSL.ByteString -> BSL.ByteString
 predsToKaggleFormat testData predictions =
   let passengerIds = readColumn 0 CSV.HasHeader testData :: V.Vector Int
-      preds = V.map round (readColumn 0 CSV.NoHeader predictions :: V.Vector Double)
+      preds =
+        V.map round (readColumn 0 CSV.NoHeader predictions :: V.Vector Double)
       outdata = V.toList $ V.zipWith KTR passengerIds preds
       header = CSV.header ["PassengerId", "Survived"]
    in CSV.encodeByName header outdata
