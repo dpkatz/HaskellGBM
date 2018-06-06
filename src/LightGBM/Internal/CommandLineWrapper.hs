@@ -2,8 +2,6 @@
 
 module LightGBM.Internal.CommandLineWrapper
   ( run
-  , OutLog(..)
-  , ErrLog(..)
   ) where
 
 import qualified Data.ByteString.Lazy as BSL
@@ -18,6 +16,7 @@ import           System.Exit (ExitCode(..))
 import qualified System.Process.Typed as S
 
 import qualified LightGBM.Parameters as P
+import           LightGBM.Utils.Types (ErrLog (..), OutLog (..))
 
 -- Maps from values to relevant strings
 taskPMap :: M.HashMap P.TaskType String
@@ -242,12 +241,6 @@ mkOptionString (P.TrainingMetric b) =
 mkOptionString (P.ConvertModelLanguage l) =
   ["convert_model_language=" ++ (modelLangPMap M.! l)]
 mkOptionString (P.ConvertModelOutput f) = ["convert_model=" ++ f]
-
--- | A transcript of the stdout output of running LightGBM
-newtype OutLog = OutLog T.Text deriving Show
-
--- | A transcript of the stderr output of running LightGBM
-newtype ErrLog = ErrLog T.Text deriving Show
 
 -- | Run the LightGBM executable with appropriate parameters
 run ::

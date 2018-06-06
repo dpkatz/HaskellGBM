@@ -17,6 +17,7 @@ import           System.IO.Temp (emptySystemTempFile)
 import qualified LightGBM.DataSet as DS
 import qualified LightGBM.Internal.CommandLineWrapper as CLW
 import qualified LightGBM.Parameters as P
+import           LightGBM.Utils.Types (ErrLog)
 
 -- | A model to use to make predictions
 data Model = Model
@@ -31,7 +32,7 @@ trainNewModel ::
      [P.Param] -- ^ Training parameters
   -> DS.DataSet -- ^ Training data
   -> [DS.DataSet] -- ^ Testing data
-  -> IO (Either CLW.ErrLog Model)
+  -> IO (Either ErrLog Model)
 trainNewModel trainingParams trainingData validationData = do
   modelOutputPath <- getModelOutputPath
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ trainingData)]
@@ -72,7 +73,7 @@ predict ::
      Model -- ^ A model to do prediction with
   -> [P.Param] -- ^ Prediction parameters
   -> DS.DataSet -- ^ The new input data for prediction
-  -> IO (Either CLW.ErrLog DS.DataSet) -- ^ The prediction output DataSet
+  -> IO (Either ErrLog DS.DataSet) -- ^ The prediction output DataSet
 predict model predParams inputData = do
   predictionOutputPath <- getOutputPath predParams
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ inputData)]

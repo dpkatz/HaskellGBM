@@ -13,9 +13,13 @@ module LightGBM.Utils.Types
     OneToTwoLeftSemiClosed
   , ProperFraction
   , PositiveInt
+    -- * Logging Types
+  , OutLog (..)
+  , ErrLog (..)
   ) where
 
 import           Data.Hashable (Hashable, hashWithSalt)
+import qualified Data.Text as T
 import qualified Refined as R
 
 -- | A 'Double' in the range [0, 1]
@@ -31,3 +35,9 @@ type PositiveInt = R.Refined R.Positive Int
 
 instance (Hashable a, R.Predicate p a) => Hashable (R.Refined p a) where
   hashWithSalt salt refinedA = hashWithSalt salt (R.unrefine refinedA)
+
+-- | A transcript of the output logging of LightGBM
+newtype OutLog = OutLog T.Text deriving Show
+
+-- | A transcript of the error logging of LightGBM
+newtype ErrLog = ErrLog T.Text deriving Show
