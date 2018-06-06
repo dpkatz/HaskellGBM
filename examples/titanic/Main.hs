@@ -9,6 +9,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Csv as CSV
 import qualified Data.Vector as V
 import           Refined (refineTH)
+import           Say (sayString)
 import qualified System.Directory as SD
 import           System.FilePath ((</>))
 import           System.IO (hClose, withFile, IOMode(..))
@@ -70,15 +71,18 @@ trainModel =
         Right m -> do
           _ <- LGBM.writeModelFile modelFile m
 
-          predictionSet <- LGBM.predict m [] validationData
-          predictions <- DS.getColumn 0 predictionSet :: IO [Double]
-          LGBM.writeCsvFile predictionFile predictionSet
+          predResults <- LGBM.predict m [] validationData
+          case predResults of
+            Left e -> error $ "Error preticting results:  " ++ show e
+            Right predictionSet -> do
+              predictions <- DS.getColumn 0 predictionSet :: IO [Double]
+              LGBM.writeCsvFile predictionFile predictionSet
 
-          valData <- BSL.readFile valFile
-          let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
-          print $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)
+              valData <- BSL.readFile valFile
+              let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
+              sayString $ "Self Accuracy:  " ++ show (accuracy (round <$> predictions) knowns :: Double)
 
-          return m
+              return m
 
 main :: IO ()
 main = do
@@ -91,9 +95,12 @@ main = do
           hClose testHandle
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
-            _ <- LGBM.writeCsvFile predFile =<<
-                 LGBM.predict m [] (loadData testFile)
-            withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
-              testBytes <- BSL.readFile testFile
-              predBytes <- BSL.readFile predFile
-              BSL.hPut submHandle $ predsToKaggleFormat testBytes predBytes)
+            predResults <- LGBM.predict m [] (loadData testFile)
+            case predResults of
+              Left e -> error $ "Error predicting final results:  " ++ show e
+              Right predValues -> do
+                LGBM.writeCsvFile predFile predValues
+                withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
+                  testBytes <- BSL.readFile testFile
+                  predBytes <- BSL.readFile predFile
+                  BSL.hPut submHandle $ predsToKaggleFormat testBytes predBytes)

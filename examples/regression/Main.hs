@@ -6,7 +6,7 @@
 module Main where
 
 import           Refined (refineTH)
-import           Say (say)
+import           Say (say, sayErrShow)
 import qualified System.Directory as SD
 import           System.FilePath ((</>))
 
@@ -44,9 +44,12 @@ main = do
         model <-
           LGBM.trainNewModel trainParams trainingData [testData]
         case model of
-          Left e -> print e
+          Left e -> sayErrShow e
           Right m -> do
-            LGBM.predict m [] testData >>= LGBM.writeCsvFile predictionFile
+            predResults <- LGBM.predict m [] testData
+            case predResults of
+              Left e -> sayErrShow e
+              Right preds -> LGBM.writeCsvFile predictionFile preds
 
             modelP <- fileDiff predictionFile "golden_prediction.txt"
             say $ if modelP then "Matched!" else "Predictions changed"
