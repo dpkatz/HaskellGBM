@@ -70,17 +70,37 @@ readModelFile = return . Model
 -- output file.
 predict ::
      Model -- ^ A model to do prediction with
+  -> [P.Param] -- ^ Prediction parameters
   -> DS.DataSet -- ^ The new input data for prediction
   -> IO DS.DataSet -- ^ The prediction output DataSet
-predict model inputData = do
-  predictionOutputPath <- emptySystemTempFile "predictionOutput"
+predict model predParams inputData = do
+  predictionOutputPath <- getOutputPath predParams
   let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ inputData)]
       runParams =
         [ P.Task P.Predict
         , P.InputModel $ modelPath model
         , P.PredictionData $ DS.dataPath inputData
-        , P.OutputResult predictionOutputPath
-        ]
+        ] ++ if hasOutputParam predParams
+          then []
+          else [P.OutputResult predictionOutputPath]
+
   -- FIXME Handle the error case properly
-  _ <- CLW.run lightgbmExe $ concat [dataParams, runParams]
+  _ <- CLW.run lightgbmExe $ concat [predParams, dataParams, runParams]
   return $ DS.CSVFile predictionOutputPath (DS.HasHeader False)
+  where
+    isOutputParam :: P.Param -> Bool
+    isOutputParam p = case p of
+      (P.OutputResult _) -> True
+      _ -> False
+
+    hasOutputParam :: [P.Param] -> Bool
+    hasOutputParam ps =
+      case filter isOutputParam ps of
+        [] -> False
+        _ -> True
+
+    getOutputPath :: Foldable t => t P.Param -> IO FilePath
+    getOutputPath ps =
+      case find isOutputParam ps of
+        Just (P.OutputResult path) -> return path
+        _ -> emptySystemTempFile "predictionOutput"

@@ -46,7 +46,7 @@ main = do
         case model of
           Left e -> print e
           Right m -> do
-            LGBM.predict m testData >>= LGBM.writeCsvFile predictionFile
+            LGBM.predict m [] testData >>= LGBM.writeCsvFile predictionFile
 
             modelP <- fileDiff predictionFile "golden_prediction.txt"
             say $ if modelP then "Matched!" else "Predictions changed"

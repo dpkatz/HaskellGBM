@@ -70,7 +70,7 @@ trainModel =
         Right m -> do
           _ <- LGBM.writeModelFile modelFile m
 
-          predictionSet <- LGBM.predict m validationData
+          predictionSet <- LGBM.predict m [] validationData
           predictions <- DS.getColumn 0 predictionSet :: IO [Double]
           LGBM.writeCsvFile predictionFile predictionSet
 
@@ -92,7 +92,7 @@ main = do
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
             _ <- LGBM.writeCsvFile predFile =<<
-                 LGBM.predict m (loadData testFile)
+                 LGBM.predict m [] (loadData testFile)
             withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
               testBytes <- BSL.readFile testFile
               predBytes <- BSL.readFile predFile
