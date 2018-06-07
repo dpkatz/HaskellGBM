@@ -86,7 +86,7 @@ applicationPMap =
     , (P.Regression P.Quantile, "quantile")
     , (P.Regression P.MAPE, "mape")
     , (P.Regression P.Gamma, "gamma")
-    , (P.Binary, "binary")
+    , (P.BinaryClassification, "binary")
     , (P.CrossEntropy P.XEntropy, "xentropy")
     , (P.CrossEntropy P.XEntropyLambda, "xentlambda")
     , (P.LambdaRank, "lambdarank")

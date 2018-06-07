@@ -17,7 +17,7 @@ import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =
-  [ P.Objective P.Binary
+  [ P.Objective P.BinaryClassification
   , P.Metric [P.BinaryLogloss, P.AUC]
   , P.TrainingMetric True
   , P.LearningRate $$(refineTH 0.1)

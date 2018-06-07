@@ -266,11 +266,11 @@ type NumClasses = Natural
 
 -- | LightGBM can be used for a variety of applications
 data Application
-  = Regression RegressionApp -- ^ Regression
-  | Binary -- ^ Binary classification
-  | MultiClass MultiClassStyle NumClasses -- ^ Multi-class
+  = Regression RegressionApp
+  | BinaryClassification
+  | MultiClass MultiClassStyle NumClasses
   | CrossEntropy XEApp
-  | LambdaRank                  -- ^ A ranking algo
+  | LambdaRank                  -- ^ A ranking algorithm
   deriving (Eq, Show, Generic)
 instance Hashable Application
 
