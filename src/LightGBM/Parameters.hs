@@ -45,48 +45,54 @@ import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 
 import LightGBM.Utils.Types
-  ( OneToTwoLeftSemiClosed
+  ( IntGreaterThanOne
+  , LeftOpenProperFraction
+  , NonNegativeDouble
+  , OneToTwoLeftSemiClosed
+  , OpenProperFraction
+  , PositiveDouble
   , PositiveInt
   , ProperFraction
   )
 
 -- | Parameters control the behavior of lightGBM.
 data Param
-  = App Application -- ^ Application (regression, binary classification, etc.)
+  = Objective Application -- ^ Regression, binary classification, etc.
   | BoostingType Booster -- ^ Booster to apply - by default is 'GBDT'
   | TrainingData FilePath -- ^ Path to training data
   | ValidationData [FilePath] -- ^ Paths to validation data files (supports multi-validation)
   | PredictionData FilePath -- ^ Path to data to use for a prediction
   | Iterations Natural -- ^ Number of boosting iterations - default is 100
-  | LearningRate Double
-  | NumLeaves Natural
-  | Parallelism ParallelismStyle
-  | NumThreads Natural
-  | Device Device
-  | MaxDepth Natural
-  | MinDataInLeaf Natural
-  | MinSumHessianInLeaf Double
-  | FeatureFraction ProperFraction
-  | FeatureFractionSeed Int
-  | BaggingFraction ProperFraction
+  | LearningRate PositiveDouble -- ^ Scale how quickly parameters change in training
+  | NumLeaves PositiveInt       -- ^ Maximum number of leaves in one tree
+  | Parallelism ParallelismStyle -- ^ Called 'tree_learner' in the LightGBM docs
+  | NumThreads Natural -- ^ Number of threads for LightGBM to use
+  | Device Device -- ^ GPU or CPU
+  | RandomSeed Int -- ^ A random seed used to generate other random seeds
+  | MaxDepth Natural            -- ^ Limit the depth of the tree model
+  | MinDataInLeaf Natural       -- ^ Minimum data count in a leaf
+  | MinSumHessianInLeaf NonNegativeDouble -- ^ Minimal sum of the Hessian in one leaf
+  | BaggingFraction LeftOpenProperFraction
   | BaggingFreq PositiveInt
   | BaggingFractionSeed Int
-  | EarlyStoppingRounds PositiveInt
-  | Regularization_L1 Double
-  | Regularization_L2 Double
-  | MaxDeltaStep Double
-  | MinSplitGain Double
-  | TopRate Double -- ^ GOSS only
-  | OtherRate Double -- ^ GOSS only
-  | MinDataPerGroup Natural -- ^ Minimum number of data points per categorial group
-  | MaxCatThreshold Natural
-  | CatSmooth Double
-  | CatL2 Double -- ^ L2 regularization in categorical split
+  | FeatureFraction LeftOpenProperFraction
+  | FeatureFractionSeed Int
+  | EarlyStoppingRounds PositiveInt -- ^ Stop training if a validation metric doesn't improve in the last n rounds
+  | Regularization_L1 NonNegativeDouble
+  | Regularization_L2 NonNegativeDouble
+  | MaxDeltaStep PositiveDouble
+  | MinSplitGain NonNegativeDouble
+  | TopRate ProperFraction -- ^ GOSS only
+  | OtherRate ProperFraction -- ^ GOSS only
+  | MinDataPerGroup PositiveInt -- ^ Minimum number of data points per categorial group
+  | MaxCatThreshold PositiveInt
+  | CatSmooth NonNegativeDouble
+  | CatL2 NonNegativeDouble -- ^ L2 regularization in categorical split
   | MaxCatToOneHot PositiveInt
-  | TopK Natural -- ^ VotingPar only
+  | TopK PositiveInt -- ^ VotingPar only
   | MonotoneConstraint [Direction] -- ^ Length of directions = number of features
-  | MaxBin PositiveInt
-  | MinDataInBin Natural
+  | MaxBin IntGreaterThanOne
+  | MinDataInBin PositiveInt
   | DataRandomSeed Int
   | OutputModel FilePath -- ^ Where to persist the model after training
   | InputModel FilePath -- ^ Filepath to a persisted model to use for prediction or additional training
@@ -104,7 +110,7 @@ data Param
   | PredictRawScore Bool -- ^ Prediction Only; true = raw scores only, false = transformed scores
   | PredictLeafIndex Bool -- ^ Prediction Only
   | PredictContrib Bool -- ^ Prediction Only
-  | BinConstructSampleCount Natural
+  | BinConstructSampleCount PositiveInt
   | NumIterationsPredict Natural -- ^ Prediction Only; how many trained predictions
   | PredEarlyStop Bool
   | PredEarlyStopFreq Natural
@@ -114,14 +120,14 @@ data Param
   | InitScoreFile FilePath
   | ValidInitScoreFile [FilePath]
   | ForcedSplits FilePath
-  | Sigmoid Double -- ^ Used in Binary classification and LambdaRank
-  | Alpha Double -- ^ Used in Huber loss and Quantile regression
-  | FairC Double -- ^ Used in Fair loss
-  | PoissonMaxDeltaStep Double -- ^ Used in Poisson regression
+  | Sigmoid PositiveDouble -- ^ Used in Binary classification and LambdaRank
+  | Alpha OpenProperFraction -- ^ Used in Huber loss and Quantile regression
+  | FairC PositiveDouble -- ^ Used in Fair loss
+  | PoissonMaxDeltaStep PositiveDouble -- ^ Used in Poisson regression
   | ScalePosWeight Double -- ^ Used in Binary classification
   | BoostFromAverage Bool -- ^ Used only in RegressionL2 task
   | IsUnbalance Bool -- ^ Used in Binary classification (set to true if training data are unbalanced)
-  | MaxPosition Natural -- ^ Used in LambdaRank
+  | MaxPosition PositiveInt -- ^ Used in LambdaRank
   | LabelGain [Double] -- ^ Used in LambdaRank
   | RegSqrt Bool -- ^ Only used in RegressionL2
   | Metric [Metric] -- ^ Loss Metric
@@ -198,8 +204,8 @@ data ParallelismStyle
 instance Hashable ParallelismStyle
 
 data GPUParam
-  = GpuPlatformId Int
-  | GpuDeviceId Int
+  = GpuPlatformId Natural
+  | GpuDeviceId Natural
   | GpuUseDP Bool
   deriving (Eq, Show, Generic)
 instance Hashable GPUParam
@@ -264,15 +270,15 @@ data Application
   | Binary -- ^ Binary classification
   | MultiClass MultiClassStyle NumClasses -- ^ Multi-class
   | CrossEntropy XEApp
-  | LambdaRank
+  | LambdaRank                  -- ^ A ranking algo
   deriving (Eq, Show, Generic)
 instance Hashable Application
 
 -- | Parameters exclusively for the DART booster
 data DARTParam
-  = DropRate Double
-  | SkipDrop Double
-  | MaxDrop PositiveInt
+  = DropRate ProperFraction     -- ^ Dropout rate
+  | SkipDrop ProperFraction     -- ^ Probablility of skipping a drop
+  | MaxDrop PositiveInt         -- ^ Max number of dropped trees on one iteration
   | UniformDrop Bool
   | XGBoostDARTMode Bool
   | DropSeed Int

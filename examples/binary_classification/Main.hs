@@ -17,16 +17,16 @@ import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =
-  [ P.App P.Binary
+  [ P.Objective P.Binary
   , P.Metric [P.BinaryLogloss, P.AUC]
   , P.TrainingMetric True
-  , P.LearningRate 0.1
-  , P.NumLeaves 63
+  , P.LearningRate $$(refineTH 0.1)
+  , P.NumLeaves $$(refineTH 63)
   , P.FeatureFraction $$(refineTH 0.8)
   , P.BaggingFreq $$(refineTH 5)
   , P.BaggingFraction $$(refineTH 0.8)
   , P.MinDataInLeaf 50
-  , P.MinSumHessianInLeaf 5.0
+  , P.MinSumHessianInLeaf $$(refineTH 5.0)
   , P.IsSparse True
   ]
 

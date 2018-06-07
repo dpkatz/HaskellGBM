@@ -17,14 +17,14 @@ import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =
-  [ P.App $ P.Regression P.L2
+  [ P.Objective $ P.Regression P.L2
   , P.TrainingMetric True
-  , P.LearningRate 0.05
+  , P.LearningRate $$(refineTH 0.05)
   , P.FeatureFraction $$(refineTH 0.9)
   , P.BaggingFreq $$(refineTH 5)
   , P.BaggingFraction $$(refineTH 0.8)
   , P.MinDataInLeaf 100
-  , P.MinSumHessianInLeaf 5.0
+  , P.MinSumHessianInLeaf $$(refineTH 5.0)
   , P.IsSparse True
   ]
 

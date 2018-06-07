@@ -96,9 +96,9 @@ mkTweedieString :: P.TweedieRegressionParam -> String
 mkTweedieString (P.TweedieVariancePower p) = "tweedie_variance_power=" ++ show p
 
 mkDartString :: P.DARTParam -> String
-mkDartString (P.DropRate r) = "drop_rate=" ++ show r
-mkDartString (P.SkipDrop r) = "skip_drop=" ++ show r
-mkDartString (P.MaxDrop r) = "max_drop=" ++ show r
+mkDartString (P.DropRate r) = "drop_rate=" ++ show (unrefine r)
+mkDartString (P.SkipDrop r) = "skip_drop=" ++ show (unrefine r)
+mkDartString (P.MaxDrop r) = "max_drop=" ++ show (unrefine r)
 mkDartString (P.UniformDrop b) = "uniform_drop=" ++ show b
 mkDartString (P.XGBoostDARTMode b) = "xgboost_dart_mode=" ++ show b
 mkDartString (P.DropSeed b) = "drop_seed=" ++ show b
@@ -109,13 +109,13 @@ colSelPrefix (P.ColName _) = "name:"
 
 -- | Construct the option string for the command.
 mkOptionString :: P.Param -> [String]
-mkOptionString (P.App (P.MultiClass P.MultiClassSimple n)) =
+mkOptionString (P.Objective (P.MultiClass P.MultiClassSimple n)) =
   ["application=multiclass", "num_classes=" ++ show n]
-mkOptionString (P.App (P.MultiClass P.MultiClassOneVsAll n)) =
+mkOptionString (P.Objective (P.MultiClass P.MultiClassOneVsAll n)) =
   ["application=multiclassova", "num_classes=" ++ show n]
-mkOptionString (P.App (P.Regression (P.Tweedie tparams))) =
+mkOptionString (P.Objective (P.Regression (P.Tweedie tparams))) =
   ["application=tweedie"] ++ map mkTweedieString tparams
-mkOptionString (P.App a) = ["application=" ++ (applicationPMap M.! a)]
+mkOptionString (P.Objective a) = ["application=" ++ (applicationPMap M.! a)]
 mkOptionString (P.BoostingType (P.DART dartParams)) =
   ["boosting=dart"] ++ map mkDartString dartParams
 mkOptionString (P.BoostingType b) = ["boosting=" ++ (boosterPMap M.! b)]
@@ -124,8 +124,8 @@ mkOptionString (P.ValidationData fs) =
   ["valid=" ++ intercalate "," (map show fs)]
 mkOptionString (P.PredictionData f) = ["data=" ++ show f]
 mkOptionString (P.Iterations n) = ["num_iterations=" ++ show n]
-mkOptionString (P.LearningRate d) = ["learning_rate=" ++ show d]
-mkOptionString (P.NumLeaves n) = ["num_leaves=" ++ show n]
+mkOptionString (P.LearningRate d) = ["learning_rate=" ++ show (unrefine d)]
+mkOptionString (P.NumLeaves n) = ["num_leaves=" ++ show (unrefine n)]
 mkOptionString (P.Parallelism P.Serial) = ["tree_learner=serial"]
 mkOptionString (P.Parallelism (P.FeaturePar params)) =
   "tree_learner=feature" : mkParaOptions params
@@ -137,10 +137,11 @@ mkOptionString (P.NumThreads n) = ["num_threads=" ++ show n]
 mkOptionString (P.Device P.CPU) = ["device=cpu"]
 mkOptionString (P.Device (P.GPU gpuParams)) =
   "device=gpu" : map mkGPUOption gpuParams
+mkOptionString (P.RandomSeed s) = ["seed=" ++ show s]
 mkOptionString (P.MaxDepth n) = ["max_depth=" ++ show n]
 mkOptionString (P.MinDataInLeaf n) = ["min_data_in_leaf=" ++ show n]
 mkOptionString (P.MinSumHessianInLeaf d) =
-  ["min_sum_hessian_in_leaf=" ++ show d]
+  ["min_sum_hessian_in_leaf=" ++ show (unrefine d)]
 mkOptionString (P.FeatureFraction f) =
   ["feature_fraction=" ++ show (unrefine f)]
 mkOptionString (P.FeatureFractionSeed s) = ["feature_fraction_seed=" ++ show s]
@@ -150,22 +151,22 @@ mkOptionString (P.BaggingFreq n) = ["bagging_freq=" ++ show (unrefine n)]
 mkOptionString (P.BaggingFractionSeed n) = ["bagging_seed=" ++ show n]
 mkOptionString (P.EarlyStoppingRounds r) =
   ["early_stopping_round=" ++ show (unrefine r)]
-mkOptionString (P.Regularization_L1 d) = ["lambda_l1=" ++ show d]
-mkOptionString (P.Regularization_L2 d) = ["lambda_l2=" ++ show d]
-mkOptionString (P.MaxDeltaStep s) = ["max_delta_step=" ++ show s]
-mkOptionString (P.MinSplitGain sg) = ["min_split_gain=" ++ show sg]
-mkOptionString (P.TopRate b) = ["top_rate=" ++ show b]
-mkOptionString (P.OtherRate b) = ["other_rate=" ++ show b]
-mkOptionString (P.MinDataPerGroup b) = ["min_data_per_group=" ++ show b]
-mkOptionString (P.MaxCatThreshold b) = ["max_cat_threshold=" ++ show b]
-mkOptionString (P.CatSmooth b) = ["cat_smooth=" ++ show b]
-mkOptionString (P.CatL2 b) = ["cat_l2=" ++ show b]
-mkOptionString (P.MaxCatToOneHot b) = ["max_cat_to_onehot=" ++ show b]
-mkOptionString (P.TopK b) = ["top_k=" ++ show b]
+mkOptionString (P.Regularization_L1 d) = ["lambda_l1=" ++ show (unrefine d)]
+mkOptionString (P.Regularization_L2 d) = ["lambda_l2=" ++ show (unrefine d)]
+mkOptionString (P.MaxDeltaStep s) = ["max_delta_step=" ++ show (unrefine s)]
+mkOptionString (P.MinSplitGain sg) = ["min_split_gain=" ++ show (unrefine sg)]
+mkOptionString (P.TopRate b) = ["top_rate=" ++ show (unrefine b)]
+mkOptionString (P.OtherRate b) = ["other_rate=" ++ show (unrefine b)]
+mkOptionString (P.MinDataPerGroup b) = ["min_data_per_group=" ++ show (unrefine b)]
+mkOptionString (P.MaxCatThreshold b) = ["max_cat_threshold=" ++ show (unrefine b)]
+mkOptionString (P.CatSmooth b) = ["cat_smooth=" ++ show (unrefine b)]
+mkOptionString (P.CatL2 b) = ["cat_l2=" ++ show (unrefine b)]
+mkOptionString (P.MaxCatToOneHot b) = ["max_cat_to_onehot=" ++ show (unrefine b)]
+mkOptionString (P.TopK b) = ["top_k=" ++ show (unrefine b)]
 mkOptionString (P.MonotoneConstraint cs) =
   ["monotone_constraint=" ++ intercalate "," (map (directionPMap M.!) cs)]
 mkOptionString (P.MaxBin n) = ["max_bin=" ++ show (unrefine n)]
-mkOptionString (P.MinDataInBin n) = ["min_data_in_bin=" ++ show n]
+mkOptionString (P.MinDataInBin n) = ["min_data_in_bin=" ++ show (unrefine n)]
 mkOptionString (P.DataRandomSeed i) = ["data_random_seed=" ++ show i]
 mkOptionString (P.OutputModel f) = ["output_model=" ++ show f]
 mkOptionString (P.InputModel f) = ["input_model=" ++ show f]
@@ -189,7 +190,7 @@ mkOptionString (P.PredictRawScore b) = ["predict_raw_score=" ++ show b]
 mkOptionString (P.PredictLeafIndex b) = ["predict_leaf_index=" ++ show b]
 mkOptionString (P.PredictContrib b) = ["predict_contrib=" ++ show b]
 mkOptionString (P.BinConstructSampleCount n) =
-  ["bin_construct_sample_cnt=" ++ show n]
+  ["bin_construct_sample_cnt=" ++ show (unrefine n)]
 mkOptionString (P.NumIterationsPredict n) =
   ["num_iterations_predict=" ++ show n]
 mkOptionString (P.PredEarlyStop b) = ["pred_early_stop=" ++ show b]
@@ -201,14 +202,15 @@ mkOptionString (P.InitScoreFile f) = ["init_score_file=" ++ f]
 mkOptionString (P.ValidInitScoreFile f) =
   ["valid_init_score_file=" ++ intercalate "," f]
 mkOptionString (P.ForcedSplits f) = ["forced_splits=" ++ f]
-mkOptionString (P.Sigmoid d) = ["sigmoid=" ++ show d]
-mkOptionString (P.Alpha d) = ["alpha=" ++ show d]
-mkOptionString (P.FairC d) = ["fair_c=" ++ show d]
-mkOptionString (P.PoissonMaxDeltaStep d) = ["poisson_max_delta_step=" ++ show d]
+mkOptionString (P.Sigmoid d) = ["sigmoid=" ++ show (unrefine d)]
+mkOptionString (P.Alpha d) = ["alpha=" ++ show (unrefine d)]
+mkOptionString (P.FairC d) = ["fair_c=" ++ show (unrefine d)]
+mkOptionString (P.PoissonMaxDeltaStep d) =
+  ["poisson_max_delta_step=" ++ show (unrefine d)]
 mkOptionString (P.ScalePosWeight d) = ["scale_pos_weight=" ++ show d]
 mkOptionString (P.BoostFromAverage b) = ["boost_from_average=" ++ show b]
 mkOptionString (P.IsUnbalance b) = ["is_unbalance=" ++ show b]
-mkOptionString (P.MaxPosition n) = ["max_position=" ++ show n]
+mkOptionString (P.MaxPosition n) = ["max_position=" ++ show (unrefine n)]
 mkOptionString (P.LabelGain ds) =
   ["label_gain=" ++ intercalate "," (map show ds)]
 mkOptionString (P.RegSqrt b) = ["reg_sqrt=" ++ show b]

@@ -17,10 +17,10 @@ import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =
-  [ P.App (P.MultiClass P.MultiClassSimple 5)
+  [ P.Objective (P.MultiClass P.MultiClassSimple 5)
   , P.TrainingMetric True
   , P.EarlyStoppingRounds $$(refineTH 10)
-  , P.LearningRate 0.05
+  , P.LearningRate $$(refineTH 0.05)
   ]
 
 -- The data files for this test don't have any headers
