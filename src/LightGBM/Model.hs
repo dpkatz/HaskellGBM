@@ -16,6 +16,7 @@ import           System.IO.Temp (emptySystemTempFile)
 
 import qualified LightGBM.DataSet as DS
 import qualified LightGBM.Internal.CommandLineWrapper as CLW
+import qualified LightGBM.Internal.CLIParameters as CLIP
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils.Types (ErrLog)
 
@@ -35,16 +36,17 @@ trainNewModel ::
   -> IO (Either ErrLog Model)
 trainNewModel trainingParams trainingData validationData = do
   modelOutputPath <- getModelOutputPath
-  let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ trainingData)]
+  let dataParams = [CLIP.Header (DS.getHeader . DS.hasHeader $ trainingData)]
+      taskParams = [CLIP.Task CLIP.Train]
       runParams =
-        [ P.Task P.Train
-        , P.TrainingData (DS.dataPath trainingData)
+        [ P.TrainingData (DS.dataPath trainingData)
         , P.ValidationData $ fmap DS.dataPath validationData
         ] ++
         if hasModelOutputPathParam
           then []
           else [P.OutputModel modelOutputPath]
-  runlog <- CLW.run lightgbmExe $ concat [runParams, trainingParams, dataParams]
+  runlog <-
+    CLW.run lightgbmExe (runParams ++ trainingParams) (dataParams ++ taskParams)
   return $ either Left (\_ -> Right $ Model modelOutputPath) runlog
   where
     isOutputModelParam (P.OutputModel _) = True
@@ -76,17 +78,17 @@ predict ::
   -> IO (Either ErrLog DS.DataSet) -- ^ The prediction output DataSet
 predict model predParams inputData = do
   predictionOutputPath <- getOutputPath predParams
-  let dataParams = [P.Header (DS.getHeader . DS.hasHeader $ inputData)]
+  let dataParams = [CLIP.Header (DS.getHeader . DS.hasHeader $ inputData)]
+      taskParams = [CLIP.Task CLIP.Predict]
       runParams =
-        [ P.Task P.Predict
-        , P.InputModel $ modelPath model
+        [ P.InputModel $ modelPath model
         , P.PredictionData $ DS.dataPath inputData
         ] ++
         if hasOutputParam predParams
           then []
           else [P.OutputResult predictionOutputPath]
-
-  runResults <- CLW.run lightgbmExe $ concat [predParams, dataParams, runParams]
+  runResults <-
+    CLW.run lightgbmExe (predParams ++ runParams) (dataParams ++ taskParams)
   return $
     either
       Left

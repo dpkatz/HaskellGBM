@@ -1,5 +1,15 @@
--- | Parameter types for LightGBM
 {-# LANGUAGE DeriveGeneric #-}
+-- | Parameter types for LightGBM.
+--
+-- Parameter details are documented in the
+-- <http://lightgbm.readthedocs.io/en/latest/Parameters.html LightGBM documentation>.
+--
+-- Note that some of the parameters listed in the documentation are
+-- not exposed here since they're set implicitly through the "LightGBM.DataSet"
+-- or "LightGBM.Model" API.  The list of "implicit" parameters is:
+--
+--   * task
+--   * header
 
 module LightGBM.Parameters
   ( -- * Parameters
@@ -22,7 +32,6 @@ module LightGBM.Parameters
   , ParallelismStyle(..)
   , Param(..)
   , RegressionApp(..)
-  , TaskType(..)
   , TweedieRegressionParam(..)
   , VerbosityLevel(..)
   , XEApp(..)
@@ -43,9 +52,7 @@ import LightGBM.Utils.Types
 
 -- | Parameters control the behavior of lightGBM.
 data Param
-  = ConfigFile FilePath -- ^ Path to config file
-  | Task TaskType -- ^ Task to perform (train, predict, etc.)
-  | App Application -- ^ Application (regression, binary classification, etc.)
+  = App Application -- ^ Application (regression, binary classification, etc.)
   | BoostingType Booster -- ^ Booster to apply - by default is 'GBDT'
   | TrainingData FilePath -- ^ Path to training data
   | ValidationData [FilePath] -- ^ Paths to validation data files (supports multi-validation)
@@ -89,7 +96,6 @@ data Param
   | TwoRoundLoading Bool
   | SaveBinary Bool
   | Verbosity VerbosityLevel
-  | Header Bool -- ^ True if the input data has a header
   | LabelColumn ColumnSelector -- ^ Which column has the labels
   | WeightColumn ColumnSelector -- ^ Which column has the weights
   | QueryColumn ColumnSelector
@@ -124,15 +130,6 @@ data Param
   | ConvertModelLanguage ModelLang
   | ConvertModelOutput FilePath
   deriving (Eq, Show)
-
--- | LightGBM supports various tasks:
-data TaskType
-  = Train -- ^ Training
-  | Predict -- ^ Prediction
-  | ConvertModel -- ^ Conversion into an if-then-else format
-  | Refit -- ^ Refitting existing models with new data
-  deriving (Eq, Show, Generic)
-instance Hashable TaskType
 
 -- | Different types of Boosting approaches
 data Booster

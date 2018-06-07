@@ -17,17 +17,9 @@ import qualified System.Process.Typed as S
 
 import qualified LightGBM.Parameters as P
 import           LightGBM.Utils.Types (ErrLog (..), OutLog (..))
+import qualified LightGBM.Internal.CLIParameters as CLIP
 
 -- Maps from values to relevant strings
-taskPMap :: M.HashMap P.TaskType String
-taskPMap =
-  M.fromList
-    [ (P.Train, "train")
-    , (P.Predict, "predict")
-    , (P.ConvertModel, "convert_model")
-    , (P.Refit, "refit")
-    ]
-
 boosterPMap :: M.HashMap P.Booster String
 boosterPMap =
   M.fromList [(P.GBDT, "gbdt"), (P.RandomForest, "rf"), (P.GOSS, "goss")]
@@ -117,8 +109,6 @@ colSelPrefix (P.ColName _) = "name:"
 
 -- | Construct the option string for the command.
 mkOptionString :: P.Param -> [String]
-mkOptionString (P.ConfigFile f) = ["config=" ++ show f]
-mkOptionString (P.Task t) = ["task=" ++ (taskPMap M.! t)]
 mkOptionString (P.App (P.MultiClass P.MultiClassSimple n)) =
   ["application=multiclass", "num_classes=" ++ show n]
 mkOptionString (P.App (P.MultiClass P.MultiClassOneVsAll n)) =
@@ -185,7 +175,6 @@ mkOptionString (P.IsSparse b) = ["is_sparse=" ++ show b]
 mkOptionString (P.TwoRoundLoading b) = ["two_round=" ++ show b]
 mkOptionString (P.SaveBinary b) = ["save_binary=" ++ show b]
 mkOptionString (P.Verbosity v) = ["verbosity=" ++ verbosityPMap M.! v]
-mkOptionString (P.Header b) = ["header=" ++ show b]
 mkOptionString (P.LabelColumn c) =
   ["label=" ++ colSelPrefix c ++ P.colSelArgument c]
 mkOptionString (P.WeightColumn c) = ["weight=" ++ P.colSelArgument c]
@@ -242,14 +231,26 @@ mkOptionString (P.ConvertModelLanguage l) =
   ["convert_model_language=" ++ (modelLangPMap M.! l)]
 mkOptionString (P.ConvertModelOutput f) = ["convert_model=" ++ f]
 
+mkCliOptionString :: CLIP.CommandLineParam -> [String]
+mkCliOptionString (CLIP.ConfigFile f) = ["config=" ++ show f]
+mkCliOptionString (CLIP.Header b) = ["header=" ++ show b]
+mkCliOptionString (CLIP.Task t) =
+  ["task=" ++ case t of
+                CLIP.Train -> "train"
+                CLIP.Predict -> "predict"
+                CLIP.ConvertModel -> "convert_model"
+                CLIP.Refit -> "refit"
+  ]
 -- | Run the LightGBM executable with appropriate parameters
 run ::
      FilePath -- ^ The path to the lightgbm executable
   -> [P.Param] -- ^ A list of parameters to override defaults
+  -> [CLIP.CommandLineParam] -- ^ A list of command-line specific parameters
   -> IO (Either ErrLog OutLog)
-run executable params = do
+run executable params cliParams = do
   let optStrings = concatMap mkOptionString params
-      lgbmProc = S.proc executable optStrings
+      cliOptStrings = concatMap mkCliOptionString cliParams
+      lgbmProc = S.proc executable (optStrings ++ cliOptStrings)
   (exitcode, out, err) <-
     S.readProcess (S.setStdin (S.byteStringInput "") lgbmProc)
   case exitcode of
