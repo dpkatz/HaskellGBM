@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Formatting as F
 import           Refined (unrefine)
+import           System.Directory (findExecutable)
 import           System.Exit (ExitCode(..))
 import qualified System.Process.Typed as S
 
@@ -251,14 +252,18 @@ run ::
   -> [CLIP.CommandLineParam] -- ^ A list of command-line specific parameters
   -> IO (Either ErrLog OutLog)
 run executable params cliParams = do
-  let optStrings = concatMap mkOptionString params
-      cliOptStrings = concatMap mkCliOptionString cliParams
-      lgbmProc = S.proc executable (optStrings ++ cliOptStrings)
-  (exitcode, out, err) <-
-    S.readProcess (S.setStdin (S.byteStringInput "") lgbmProc)
-  case exitcode of
-    ExitSuccess -> return $ Right . OutLog . TE.decodeUtf8 . BSL.toStrict $ out
-    ExitFailure code -> do
-      let reason = F.sformat ("lightGBM failed with code : " F.% F.int) code
-          errlog = TE.decodeUtf8 . BSL.toStrict $ err
-      return $ Left . ErrLog . T.unlines $ [reason, errlog]
+  hasLightGBM <- findExecutable executable
+  case hasLightGBM of
+    Nothing -> fail "Couldn't find the 'lightgbm' executable on the PATH."
+    Just _ -> do
+      let optStrings = concatMap mkOptionString params
+          cliOptStrings = concatMap mkCliOptionString cliParams
+          lgbmProc = S.proc executable (optStrings ++ cliOptStrings)
+      (exitcode, out, err) <-
+        S.readProcess (S.setStdin (S.byteStringInput "") lgbmProc)
+      case exitcode of
+        ExitSuccess -> return $ Right . OutLog . TE.decodeUtf8 . BSL.toStrict $ out
+        ExitFailure code -> do
+          let reason = F.sformat ("lightGBM failed with code : " F.% F.int) code
+              errlog = TE.decodeUtf8 . BSL.toStrict $ err
+          return $ Left . ErrLog . T.unlines $ [reason, errlog]
