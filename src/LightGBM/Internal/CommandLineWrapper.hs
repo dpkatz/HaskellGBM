@@ -71,9 +71,6 @@ metricPMap =
     , (P.KullbackLeibler, "kldiv")
     ]
 
-modelLangPMap :: M.HashMap P.ModelLang String
-modelLangPMap = M.fromList [(P.CPP, "cpp")]
-
 applicationPMap :: M.HashMap P.Application String
 applicationPMap =
   M.fromList
@@ -232,20 +229,21 @@ mkOptionString (P.Metric ms) =
 mkOptionString (P.MetricFreq f) = ["metric_freq=" ++ show (unrefine f)]
 mkOptionString (P.TrainingMetric b) =
   ["training_metric=" ++ fmap toLower (show b)]
-mkOptionString (P.ConvertModelLanguage l) =
-  ["convert_model_language=" ++ (modelLangPMap M.! l)]
-mkOptionString (P.ConvertModelOutput f) = ["convert_model=" ++ f]
 
 mkCliOptionString :: CLIP.CommandLineParam -> [String]
 mkCliOptionString (CLIP.ConfigFile f) = ["config=" ++ show f]
 mkCliOptionString (CLIP.Header b) = ["header=" ++ show b]
 mkCliOptionString (CLIP.Task t) =
-  ["task=" ++ case t of
-                CLIP.Train -> "train"
-                CLIP.Predict -> "predict"
-                CLIP.ConvertModel -> "convert_model"
-                CLIP.Refit -> "refit"
-  ]
+  case t of
+    (CLIP.ConvertModel ps) -> "task=convert_model" : fmap mkCMOptionString ps
+    CLIP.Train -> ["task=train"]
+    CLIP.Predict -> ["task=predict"]
+    CLIP.Refit -> ["task=refit"]
+  where
+    mkCMOptionString (CLIP.ConvertModelLanguage CLIP.CPP) =
+      "convert_model_language=cpp"
+    mkCMOptionString (CLIP.ConvertModelOutput f) = "convert_model=" ++ f
+
 -- | Run the LightGBM executable with appropriate parameters
 run ::
      FilePath -- ^ The path to the lightgbm executable

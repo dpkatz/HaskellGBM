@@ -24,7 +24,6 @@ module LightGBM.Parameters
   , MachineListFile
   , Metric(..)
   , Minutes
-  , ModelLang(..)
   , MultiClassStyle(..)
   , NDCGEvalPositions
   , NumClasses
@@ -132,8 +131,6 @@ data Param
   | Metric [Metric] -- ^ Loss Metric
   | MetricFreq PositiveInt
   | TrainingMetric Bool
-  | ConvertModelLanguage ModelLang
-  | ConvertModelOutput FilePath
   deriving (Eq, Show)
 
 -- | Different types of Boosting approaches
@@ -255,11 +252,6 @@ data Metric
   | KullbackLeibler
   deriving (Eq, Show, Generic)
 instance Hashable Metric
-
-data ModelLang =
-  CPP
-  deriving (Eq, Show, Generic)
-instance Hashable ModelLang
 
 type NumClasses = Natural
 
