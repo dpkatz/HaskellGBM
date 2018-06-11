@@ -18,6 +18,7 @@ module LightGBM.Parameters
   , DARTParam(..)
   , Device(..)
   , Direction(..)
+  , GOSSParam(..)
   , GPUParam(..)
   , LocalListenPort
   , MachineListFile
@@ -82,8 +83,6 @@ data Param
   | Regularization_L2 NonNegativeDouble
   | MaxDeltaStep PositiveDouble
   | MinSplitGain NonNegativeDouble
-  | TopRate ProperFraction -- ^ GOSS only
-  | OtherRate ProperFraction -- ^ GOSS only
   | MinDataPerGroup PositiveInt -- ^ Minimum number of data points per categorial group
   | MaxCatThreshold PositiveInt
   | CatSmooth NonNegativeDouble
@@ -142,7 +141,7 @@ data Booster
   = GBDT -- ^ Gradient Boosting Decision Tree
   | RandomForest
   | DART [DARTParam] -- ^ Dropouts meet Multiple Additive Regression Trees
-  | GOSS -- ^ Gradient-based One-Sided Sampling
+  | GOSS [GOSSParam] -- ^ Gradient-based One-Sided Sampling
   deriving (Eq, Show, Generic)
 instance Hashable Booster
 
@@ -284,6 +283,12 @@ data DARTParam
   | DropSeed Int
   deriving (Eq, Show, Generic)
 instance Hashable DARTParam
+
+data GOSSParam
+  = TopRate ProperFraction
+  | OtherRate ProperFraction
+  deriving (Eq, Show, Generic)
+instance Hashable GOSSParam
 
 -- | Some parameters are based on column selection either by index or
 -- by name.  A 'ColumnSelector' encapsulates this flexibility.

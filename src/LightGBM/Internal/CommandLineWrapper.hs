@@ -21,8 +21,7 @@ import qualified LightGBM.Internal.CLIParameters as CLIP
 
 -- Maps from values to relevant strings
 boosterPMap :: M.HashMap P.Booster String
-boosterPMap =
-  M.fromList [(P.GBDT, "gbdt"), (P.RandomForest, "rf"), (P.GOSS, "goss")]
+boosterPMap = M.fromList [(P.GBDT, "gbdt"), (P.RandomForest, "rf")]
 
 mkGPUOption :: P.GPUParam -> String
 mkGPUOption p =
@@ -103,6 +102,10 @@ mkDartString (P.UniformDrop b) = "uniform_drop=" ++ show b
 mkDartString (P.XGBoostDARTMode b) = "xgboost_dart_mode=" ++ show b
 mkDartString (P.DropSeed b) = "drop_seed=" ++ show b
 
+mkGossString :: P.GOSSParam -> String
+mkGossString (P.TopRate b) = "top_rate=" ++ show (unrefine b)
+mkGossString (P.OtherRate b) = "other_rate=" ++ show (unrefine b)
+
 colSelPrefix :: P.ColumnSelector -> String
 colSelPrefix (P.Index _) = ""
 colSelPrefix (P.ColName _) = "name:"
@@ -118,6 +121,8 @@ mkOptionString (P.Objective (P.Regression (P.Tweedie tparams))) =
 mkOptionString (P.Objective a) = ["application=" ++ (applicationPMap M.! a)]
 mkOptionString (P.BoostingType (P.DART dartParams)) =
   ["boosting=dart"] ++ map mkDartString dartParams
+mkOptionString (P.BoostingType (P.GOSS gossParams)) =
+  ["boosting=goss"] ++ map mkGossString gossParams
 mkOptionString (P.BoostingType b) = ["boosting=" ++ (boosterPMap M.! b)]
 mkOptionString (P.TrainingData f) = ["data=" ++ show f]
 mkOptionString (P.ValidationData fs) =
@@ -155,8 +160,6 @@ mkOptionString (P.Regularization_L1 d) = ["lambda_l1=" ++ show (unrefine d)]
 mkOptionString (P.Regularization_L2 d) = ["lambda_l2=" ++ show (unrefine d)]
 mkOptionString (P.MaxDeltaStep s) = ["max_delta_step=" ++ show (unrefine s)]
 mkOptionString (P.MinSplitGain sg) = ["min_split_gain=" ++ show (unrefine sg)]
-mkOptionString (P.TopRate b) = ["top_rate=" ++ show (unrefine b)]
-mkOptionString (P.OtherRate b) = ["other_rate=" ++ show (unrefine b)]
 mkOptionString (P.MinDataPerGroup b) = ["min_data_per_group=" ++ show (unrefine b)]
 mkOptionString (P.MaxCatThreshold b) = ["max_cat_threshold=" ++ show (unrefine b)]
 mkOptionString (P.CatSmooth b) = ["cat_smooth=" ++ show (unrefine b)]
