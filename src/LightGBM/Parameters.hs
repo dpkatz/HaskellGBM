@@ -5,15 +5,15 @@
 -- <http://lightgbm.readthedocs.io/en/latest/Parameters.html LightGBM documentation>.
 --
 -- Note that some of the parameters listed in the documentation are
--- not exposed here since they're set implicitly through the "LightGBM.DataSet"
--- or "LightGBM.Model" API.  The list of "implicit" parameters is:
---
---   * task
---   * header
+-- not exposed here since they're set implicitly through other parts
+-- of the API.  For instance, the 'task' param is set in the
+-- "LightGBM.Model" API, and the 'header' param is set in the
+-- "LightGBM.DataSet" API.
 
 module LightGBM.Parameters
   ( -- * Parameters
-    Application(..)
+    Param(..)
+  , Application(..)
   , Booster(..)
   , DARTParam(..)
   , Device(..)
@@ -30,7 +30,6 @@ module LightGBM.Parameters
   , NumMachines
   , ParallelismParams(..)
   , ParallelismStyle(..)
-  , Param(..)
   , RegressionApp(..)
   , TweedieRegressionParam(..)
   , VerbosityLevel(..)
