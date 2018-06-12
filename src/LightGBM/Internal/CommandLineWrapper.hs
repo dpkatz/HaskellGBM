@@ -78,7 +78,6 @@ applicationPMap =
     [ (P.Regression P.L1, "regression_l1")
     , (P.Regression P.L2, "regression_l2")
     , (P.Regression P.Huber, "huber")
-    , (P.Regression P.Poisson, "poisson")
     , (P.Regression P.Quantile, "quantile")
     , (P.Regression P.MAPE, "mape")
     , (P.Regression P.Gamma, "gamma")
@@ -93,6 +92,9 @@ mkTweedieString (P.TweedieVariancePower p) = "tweedie_variance_power=" ++ show p
 
 mkFairString :: P.FairRegressionParam -> String
 mkFairString (P.FairC pd) = "fair_c=" ++ show (unrefine pd)
+
+mkPoissonString :: P.PoissonRegressionParam -> String
+mkPoissonString (P.PoissonMaxDeltaStep pd) = "poisson_max_delta_step=" ++ show (unrefine pd)
 
 mkDartString :: P.DARTParam -> String
 mkDartString (P.DropRate r) = "drop_rate=" ++ show (unrefine r)
@@ -120,6 +122,8 @@ mkOptionString (P.Objective (P.Regression (P.Tweedie tparams))) =
   ["application=tweedie"] ++ map mkTweedieString tparams
 mkOptionString (P.Objective (P.Regression (P.Fair fparams))) =
   ["application=fair"] ++ map mkFairString fparams
+mkOptionString (P.Objective (P.Regression (P.Poisson pparams))) =
+  ["application=poisson"] ++ map mkPoissonString pparams
 mkOptionString (P.Objective a) = ["application=" ++ (applicationPMap M.! a)]
 mkOptionString (P.BoostingType (P.DART dartParams)) =
   ["boosting=dart"] ++ map mkDartString dartParams
@@ -209,8 +213,6 @@ mkOptionString (P.ValidInitScoreFile f) =
 mkOptionString (P.ForcedSplits f) = ["forced_splits=" ++ f]
 mkOptionString (P.Sigmoid d) = ["sigmoid=" ++ show (unrefine d)]
 mkOptionString (P.Alpha d) = ["alpha=" ++ show (unrefine d)]
-mkOptionString (P.PoissonMaxDeltaStep d) =
-  ["poisson_max_delta_step=" ++ show (unrefine d)]
 mkOptionString (P.ScalePosWeight d) = ["scale_pos_weight=" ++ show d]
 mkOptionString (P.BoostFromAverage b) = ["boost_from_average=" ++ show b]
 mkOptionString (P.IsUnbalance b) = ["is_unbalance=" ++ show b]

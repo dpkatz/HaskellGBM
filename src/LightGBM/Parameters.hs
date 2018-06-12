@@ -31,6 +31,7 @@ module LightGBM.Parameters
   , NumMachines
   , ParallelismParams(..)
   , ParallelismStyle(..)
+  , PoissonRegressionParam(..)
   , RegressionApp(..)
   , TweedieRegressionParam(..)
   , VerbosityLevel(..)
@@ -120,7 +121,6 @@ data Param
   | ForcedSplits FilePath
   | Sigmoid PositiveDouble -- ^ Used in Binary classification and LambdaRank
   | Alpha OpenProperFraction -- ^ Used in Huber loss and Quantile regression
-  | PoissonMaxDeltaStep PositiveDouble -- ^ Used in Poisson regression
   | ScalePosWeight Double -- ^ Used in Binary classification
   | BoostFromAverage Bool -- ^ Used only in RegressionL2 task
   | IsUnbalance Bool -- ^ Used in Binary classification (set to true if training data are unbalanced)
@@ -132,11 +132,17 @@ data Param
   | TrainingMetric Bool
   deriving (Eq, Show)
 
--- | Parameters for Fair loss regression
+--- | Parameters for Fair loss regression
 data FairRegressionParam =
   FairC PositiveDouble
-  deriving (Eq, Show, Generic)
+   deriving (Eq, Show, Generic)
 instance Hashable FairRegressionParam
+
+-- | Parameters for Poisson regression
+data PoissonRegressionParam =
+  PoissonMaxDeltaStep PositiveDouble
+  deriving (Eq, Show, Generic)
+instance Hashable PoissonRegressionParam
 
 -- | Different types of Boosting approaches
 data Booster
@@ -158,7 +164,7 @@ data RegressionApp
   | L2 -- ^ RMS errror metric
   | Huber
   | Fair [FairRegressionParam]
-  | Poisson
+  | Poisson [PoissonRegressionParam]
   | Quantile
   | MAPE
   | Gamma
