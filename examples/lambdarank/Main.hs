@@ -17,7 +17,7 @@ import           LightGBM.Utils.Test (fileDiff)
 
 trainParams :: [P.Param]
 trainParams =
-  [ P.Objective P.LambdaRank
+  [ P.Objective (P.LambdaRank [])
   , P.Metric [P.NDCG (Just [1, 3, 5])]
   , P.TrainingMetric True
   , P.LearningRate $$(refineTH 0.1)

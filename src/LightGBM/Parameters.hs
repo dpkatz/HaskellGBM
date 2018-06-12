@@ -22,6 +22,7 @@ module LightGBM.Parameters
   , FairRegressionParam(..)
   , GOSSParam(..)
   , GPUParam(..)
+  , LambdaRankParam(..)
   , LocalListenPort
   , MachineListFile
   , Metric(..)
@@ -122,18 +123,22 @@ data Param
   | ForcedSplits FilePath
   | Sigmoid PositiveDouble -- ^ Used in Binary classification and LambdaRank
   | Alpha OpenProperFraction -- ^ Used in Huber loss and Quantile regression
-  | ScalePosWeight Double -- ^ Used in Binary classification
   | BoostFromAverage Bool -- ^ Used only in RegressionL2 task
-  | MaxPosition PositiveInt -- ^ Used in LambdaRank
-  | LabelGain [Double] -- ^ Used in LambdaRank
   | RegSqrt Bool -- ^ Only used in RegressionL2
   | Metric [Metric] -- ^ Loss Metric
   | MetricFreq PositiveInt
   | TrainingMetric Bool
   deriving (Eq, Show)
 
-data BinaryClassParam =
-  IsUnbalance Bool -- ^ Set to true if training data are unbalanced
+data LambdaRankParam
+  = MaxPosition PositiveInt
+  | LabelGain [Double] -- ^ Used in LambdaRank
+  deriving (Eq, Show, Generic)
+instance Hashable LambdaRankParam
+
+data BinaryClassParam
+  = IsUnbalance Bool -- ^ Set to true if training data are unbalanced
+  | ScalePosWeight PositiveDouble
   deriving (Eq, Show, Generic)
 instance Hashable BinaryClassParam
 
@@ -277,7 +282,7 @@ data Application
   | BinaryClassification [BinaryClassParam]
   | MultiClass MultiClassStyle NumClasses
   | CrossEntropy XEApp
-  | LambdaRank                  -- ^ A ranking algorithm
+  | LambdaRank [LambdaRankParam] -- ^ A ranking algorithm
   deriving (Eq, Show, Generic)
 instance Hashable Application
 

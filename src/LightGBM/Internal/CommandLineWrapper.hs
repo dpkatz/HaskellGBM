@@ -83,11 +83,17 @@ applicationPMap =
     , (P.Regression P.Gamma, "gamma")
     , (P.CrossEntropy P.XEntropy, "xentropy")
     , (P.CrossEntropy P.XEntropyLambda, "xentlambda")
-    , (P.LambdaRank, "lambdarank")
     ]
 
+mkLambdaRankString :: P.LambdaRankParam -> String
+mkLambdaRankString (P.MaxPosition n) = "max_position=" ++ show (unrefine n)
+mkLambdaRankString (P.LabelGain ds) = "label_gain=" ++ intercalate "," (map show ds)
+
+-- FIXME - it is an error to set both IsUnbalance and ScalePosWeight
+-- at the same time.  Can we express this in types?
 mkBinaryClassString :: P.BinaryClassParam -> String
 mkBinaryClassString (P.IsUnbalance b) = "is_unbalance=" ++ fmap toLower (show b)
+mkBinaryClassString (P.ScalePosWeight d) = "scale_pos_weight=" ++ show (unrefine d)
 
 mkTweedieString :: P.TweedieRegressionParam -> String
 mkTweedieString (P.TweedieVariancePower p) = "tweedie_variance_power=" ++ show p
@@ -128,6 +134,8 @@ mkOptionString (P.Objective (P.Regression (P.Fair fparams))) =
   ["application=fair"] ++ map mkFairString fparams
 mkOptionString (P.Objective (P.Regression (P.Poisson pparams))) =
   ["application=poisson"] ++ map mkPoissonString pparams
+mkOptionString (P.Objective (P.LambdaRank lparams)) =
+  ["application=lambdarank"] ++ map mkLambdaRankString lparams
 mkOptionString (P.Objective a) = ["application=" ++ (applicationPMap M.! a)]
 mkOptionString (P.BoostingType (P.DART dartParams)) =
   ["boosting=dart"] ++ map mkDartString dartParams
@@ -217,11 +225,7 @@ mkOptionString (P.ValidInitScoreFile f) =
 mkOptionString (P.ForcedSplits f) = ["forced_splits=" ++ f]
 mkOptionString (P.Sigmoid d) = ["sigmoid=" ++ show (unrefine d)]
 mkOptionString (P.Alpha d) = ["alpha=" ++ show (unrefine d)]
-mkOptionString (P.ScalePosWeight d) = ["scale_pos_weight=" ++ show d]
 mkOptionString (P.BoostFromAverage b) = ["boost_from_average=" ++ show b]
-mkOptionString (P.MaxPosition n) = ["max_position=" ++ show (unrefine n)]
-mkOptionString (P.LabelGain ds) =
-  ["label_gain=" ++ intercalate "," (map show ds)]
 mkOptionString (P.RegSqrt b) = ["reg_sqrt=" ++ show b]
 mkOptionString (P.Metric ms) =
   let metrics = ["metric=" ++ intercalate "," (map metricName ms)]
