@@ -14,6 +14,7 @@ module LightGBM.Parameters
   ( -- * Parameters
     Param(..)
   , Application(..)
+  , BinaryClassParam(..)
   , Booster(..)
   , DARTParam(..)
   , Device(..)
@@ -123,7 +124,6 @@ data Param
   | Alpha OpenProperFraction -- ^ Used in Huber loss and Quantile regression
   | ScalePosWeight Double -- ^ Used in Binary classification
   | BoostFromAverage Bool -- ^ Used only in RegressionL2 task
-  | IsUnbalance Bool -- ^ Used in Binary classification (set to true if training data are unbalanced)
   | MaxPosition PositiveInt -- ^ Used in LambdaRank
   | LabelGain [Double] -- ^ Used in LambdaRank
   | RegSqrt Bool -- ^ Only used in RegressionL2
@@ -131,6 +131,11 @@ data Param
   | MetricFreq PositiveInt
   | TrainingMetric Bool
   deriving (Eq, Show)
+
+data BinaryClassParam =
+  IsUnbalance Bool -- ^ Set to true if training data are unbalanced
+  deriving (Eq, Show, Generic)
+instance Hashable BinaryClassParam
 
 --- | Parameters for Fair loss regression
 data FairRegressionParam =
@@ -269,7 +274,7 @@ type NumClasses = Natural
 -- | LightGBM can be used for a variety of applications
 data Application
   = Regression RegressionApp
-  | BinaryClassification
+  | BinaryClassification [BinaryClassParam]
   | MultiClass MultiClassStyle NumClasses
   | CrossEntropy XEApp
   | LambdaRank                  -- ^ A ranking algorithm

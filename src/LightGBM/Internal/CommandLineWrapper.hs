@@ -81,11 +81,13 @@ applicationPMap =
     , (P.Regression P.Quantile, "quantile")
     , (P.Regression P.MAPE, "mape")
     , (P.Regression P.Gamma, "gamma")
-    , (P.BinaryClassification, "binary")
     , (P.CrossEntropy P.XEntropy, "xentropy")
     , (P.CrossEntropy P.XEntropyLambda, "xentlambda")
     , (P.LambdaRank, "lambdarank")
     ]
+
+mkBinaryClassString :: P.BinaryClassParam -> String
+mkBinaryClassString (P.IsUnbalance b) = "is_unbalance=" ++ fmap toLower (show b)
 
 mkTweedieString :: P.TweedieRegressionParam -> String
 mkTweedieString (P.TweedieVariancePower p) = "tweedie_variance_power=" ++ show p
@@ -114,6 +116,8 @@ colSelPrefix (P.ColName _) = "name:"
 
 -- | Construct the option string for the command.
 mkOptionString :: P.Param -> [String]
+mkOptionString (P.Objective (P.BinaryClassification bcParams)) =
+  ["application=binary"] ++ map mkBinaryClassString bcParams
 mkOptionString (P.Objective (P.MultiClass P.MultiClassSimple n)) =
   ["application=multiclass", "num_classes=" ++ show n]
 mkOptionString (P.Objective (P.MultiClass P.MultiClassOneVsAll n)) =
@@ -215,7 +219,6 @@ mkOptionString (P.Sigmoid d) = ["sigmoid=" ++ show (unrefine d)]
 mkOptionString (P.Alpha d) = ["alpha=" ++ show (unrefine d)]
 mkOptionString (P.ScalePosWeight d) = ["scale_pos_weight=" ++ show d]
 mkOptionString (P.BoostFromAverage b) = ["boost_from_average=" ++ show b]
-mkOptionString (P.IsUnbalance b) = ["is_unbalance=" ++ show b]
 mkOptionString (P.MaxPosition n) = ["max_position=" ++ show (unrefine n)]
 mkOptionString (P.LabelGain ds) =
   ["label_gain=" ++ intercalate "," (map show ds)]
