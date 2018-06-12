@@ -10,12 +10,12 @@
 module LightGBM.Utils.Types
   (
     -- * Refined Types
-    OneToTwoLeftSemiClosed
-  , ProperFraction
-  , LeftOpenProperFraction
-  , OpenProperFraction
-  , PositiveInt
+    PositiveInt
   , IntGreaterThanOne
+  , ProperFraction
+  , OpenProperFraction
+  , LeftOpenProperFraction
+  , OneToTwoLeftSemiClosed
   , PositiveDouble
   , NonNegativeDouble
 
