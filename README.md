@@ -12,6 +12,7 @@ Haddock API documentation
 and a tutorial blog post
 [here](https://dpkatz.github.io/posts/using-lightgbm-from-haskell/).
 
-__N.B. This package is still under heavy development including API changes.__
+__N.B. This package is still under heavy development including API
+changes.  Contributions and pu;ll requests are welcome.__
 
 
