@@ -18,6 +18,7 @@ module LightGBM.Parameters
   , DARTParam(..)
   , Device(..)
   , Direction(..)
+  , FairRegressionParam(..)
   , GOSSParam(..)
   , GPUParam(..)
   , LocalListenPort
@@ -119,7 +120,6 @@ data Param
   | ForcedSplits FilePath
   | Sigmoid PositiveDouble -- ^ Used in Binary classification and LambdaRank
   | Alpha OpenProperFraction -- ^ Used in Huber loss and Quantile regression
-  | FairC PositiveDouble -- ^ Used in Fair loss
   | PoissonMaxDeltaStep PositiveDouble -- ^ Used in Poisson regression
   | ScalePosWeight Double -- ^ Used in Binary classification
   | BoostFromAverage Bool -- ^ Used only in RegressionL2 task
@@ -131,6 +131,12 @@ data Param
   | MetricFreq PositiveInt
   | TrainingMetric Bool
   deriving (Eq, Show)
+
+-- | Parameters for Fair loss regression
+data FairRegressionParam =
+  FairC PositiveDouble
+  deriving (Eq, Show, Generic)
+instance Hashable FairRegressionParam
 
 -- | Different types of Boosting approaches
 data Booster
@@ -151,7 +157,7 @@ data RegressionApp
   = L1 -- ^ Absolute error metric
   | L2 -- ^ RMS errror metric
   | Huber
-  | Fair
+  | Fair [FairRegressionParam]
   | Poisson
   | Quantile
   | MAPE
