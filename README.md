@@ -13,6 +13,24 @@ and a tutorial blog post
 [here](https://dpkatz.github.io/posts/using-lightgbm-from-haskell/).
 
 __N.B. This package is still under heavy development including API
-changes.  Contributions and pu;ll requests are welcome.__
+changes and should not be used in production code.  Contributions,
+suggestions, and PRs are welcome.__
 
+## Installation
 
+  - Install the [LightGBM library](http://lightgbm.readthedocs.io/en/latest/Installation-Guide.html)
+  - Add the location of the 'lightgbm' executable to you PATH
+  - Install the Haskell ['stack' build tool](https://docs.haskellstack.org/en/latest/install_and_upgrade/)
+  - Clone the HaskellGBM source code:
+``` shell
+$ git clone https://github.com/dpkatz/HaskellGBM.git
+```
+  - Build HaskellGBM
+
+``` shell
+$ stack setup
+$ stack build
+$ stack test
+```
+
+    
