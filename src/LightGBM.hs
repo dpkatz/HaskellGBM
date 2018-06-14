@@ -38,15 +38,16 @@
 -- >                       , P.IsSparse True
 -- >                       ]
 -- >
--- >  model <- trainNewModel modelFile trainingParams trainingData validationData 100
--- >
--- >  let newData = readCsvFile (HasHeader False) "/path/to/inputs_for_prediction"
--- >      outputFile = "/path/to/prediction_outputs"
--- >  predict model newData >>= writeCsvFile outputFile
---
--- Note that in current versions of LightGBM, categorical features
--- must be encoded as 'Int's.
---
+-- >  modelOut <- trainNewModel trainingParams trainingData validationData
+-- >  case modelOut of
+-- >      Left err -> ... -- handle the errors
+-- >      Right model -> do
+-- >          let newData = readCsvFile (HasHeader False) "/path/to/inputs_for_prediction"
+-- >              outputFile = "/path/to/prediction_outputs"
+-- >          predOut <- predict model [] newData
+-- >          case predOut of
+-- >              Left err -> ... -- handle the errors
+-- >              Right preds -> writeCsvFile outputFile preds
 module LightGBM
   ( module LightGBM.DataSet
   , module LightGBM.Model
