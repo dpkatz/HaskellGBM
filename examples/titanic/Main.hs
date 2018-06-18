@@ -44,7 +44,7 @@ trainParams =
   ]
 
 loadData :: FilePath -> DS.DataSet
-loadData = DS.readCsvFile (DS.HasHeader True)
+loadData = DS.fromCSV (DS.HasHeader True)
 
 accuracy :: (Eq a, Fractional f) => [a] -> [a] -> f
 accuracy predictions knowns =
@@ -85,7 +85,7 @@ trainModel =
             Left e -> error $ "Error preticting results:  " ++ show e
             Right predictionSet -> do
               predictions <- getColumn 0 predictionSet :: IO [Double]
-              LGBM.writeCsvFile predictionFile predictionSet
+              LGBM.toCSV predictionFile predictionSet
 
               valData <- BSL.readFile valFile
               let knowns = V.toList $ readColumn 0 CSV.HasHeader valData :: [Int]
@@ -108,7 +108,7 @@ main = do
             case predResults of
               Left e -> error $ "Error predicting final results:  " ++ show e
               Right predValues -> do
-                LGBM.writeCsvFile predFile predValues
+                LGBM.toCSV predFile predValues
                 withFile "TitanicSubmission.csv" WriteMode $ \submHandle -> do
                   testBytes <- BSL.readFile testFile
                   predBytes <- BSL.readFile predFile

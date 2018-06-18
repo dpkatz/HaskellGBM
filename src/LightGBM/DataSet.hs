@@ -4,8 +4,16 @@ module LightGBM.DataSet (
   -- * Data Handling
     DataSet (..)
   , HasHeader(..)
-  , readCsvFile
-  , writeCsvFile) where
+  , fromCSV
+  , fromFrame
+  , toCSV
+  , toFrame) where
+
+import qualified Data.Vinyl.Functor as Vinyl (Identity)
+import qualified Data.Vinyl.TypeLevel as Vinyl (RecAll)
+import qualified Frames as F
+import           Frames.CSV (writeCSV, readTable, ReadRec)
+import           Frames.InCore (RecVec)
 
 import           System.Directory (copyFile)
 
@@ -36,12 +44,62 @@ newtype HasHeader = HasHeader
 --
 --    * use some other column for the labels with the 'P.LabelColumn' parameter, and
 --    * ignore some of the feature columns with the 'P.IgnoreColumns' parameter.
-readCsvFile :: HasHeader -> FilePath -> DataSet
-readCsvFile = flip CSVFile
+fromCSV :: HasHeader -> FilePath -> DataSet
+fromCSV = flip CSVFile
+
+-- | Load data from a 'Frames.Frame' into a 'DataSet'
+--
+-- Note that this function causes the creation of a file, and it is up
+-- to the caller to control the lifetime of this file.  This function
+-- is typically called in a 'Control.Exception.bracket' or a similar
+-- facility.  For example:
+--
+-- > withSystemTempFile "inputFrame" $ \ inputFile inputHandle -> do
+-- >   hClose trainHandle
+-- >   dataset <- fromFrame inFrame inputFile
+--
+-- where 'inFrame' is the input 'Frames.Frame'.
+fromFrame ::
+     ( F.ColumnHeaders ts
+     , F.AsVinyl ts
+     , Foldable f
+     , Vinyl.RecAll Vinyl.Identity (F.UnColumn ts) Show
+     )
+  => f (F.Record ts)
+  -> FilePath
+  -> IO DataSet
+fromFrame dframe fname = do
+  _ <- writeCSV fname dframe
+  return $ fromCSV (HasHeader True) fname
 
 -- | Write a DataSet out to a CSV file
-writeCsvFile ::
+toCSV ::
      FilePath -- ^ Output path
   -> DataSet -- ^ The data to persist
   -> IO ()
-writeCsvFile outPath CSVFile {..} = copyFile dataPath outPath
+toCSV outPath CSVFile {..} = copyFile dataPath outPath
+
+-- | Convert a DataSet out to a Frame
+--
+-- Note that this function is polymorphic in the row type - the caller
+-- will have to define that explicitly or in context.  (See the
+-- doctest below for a simplistic example.)
+--
+-- >>> :set -XTypeOperators
+-- >>> :set -XDataKinds
+-- >>> import Frames ((:->))
+-- >>> import qualified Frames as F
+-- >>> import System.IO (hPutStrLn, hClose)
+-- >>> import System.IO.Temp as TMP
+-- >>> :{
+--   TMP.withSystemTempFile "toFrameTest" $ \ filepath handle -> do
+--     hPutStrLn handle "results\n1\n2\n3\n4\n5"
+--     hClose handle
+--     let ds = fromCSV (HasHeader True) filepath
+--     dsf <- toFrame ds :: IO (F.Frame (F.Record '["results" :-> Int]))
+--     return $ length dsf
+-- :}
+-- 5
+toFrame :: (RecVec rs, ReadRec rs) => DataSet -> IO (F.FrameRec rs)
+toFrame CSVFile {..} =
+  F.inCoreAoS $ readTable dataPath

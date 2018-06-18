@@ -15,7 +15,7 @@
 -- >
 -- >  [...]
 -- >
--- >  import           LightGBM ( writeCsvFile
+-- >  import           LightGBM ( toCSV
 -- >                            , readCsvFile
 -- >                            , HasHeader(..)
 -- >                            , trainNewModel)
@@ -47,7 +47,7 @@
 -- >          predOut <- predict model [] newData
 -- >          case predOut of
 -- >              Left err -> ... -- handle the errors
--- >              Right preds -> writeCsvFile outputFile preds
+-- >              Right preds -> toCSV outputFile preds
 module LightGBM
   ( module LightGBM.DataSet
   , module LightGBM.Model

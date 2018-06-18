@@ -30,7 +30,7 @@ trainParams =
 
 -- The data files for this test don't have any headers
 loadData :: FilePath -> DS.DataSet
-loadData = DS.readCsvFile (DS.HasHeader False)
+loadData = DS.fromCSV (DS.HasHeader False)
 
 main :: IO ()
 main = do
@@ -49,7 +49,7 @@ main = do
             predResults <- LGBM.predict m [] testData
             case predResults of
               Left e -> sayErrShow e
-              Right preds -> LGBM.writeCsvFile predictionFile preds
+              Right preds -> LGBM.toCSV predictionFile preds
 
             modelP <- fileDiff predictionFile "golden_prediction.txt"
             say $ if modelP then "Matched!" else "Predictions changed"
