@@ -1,6 +1,7 @@
 -- | Titanic survivorship example
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Main where
@@ -52,6 +53,14 @@ accuracy predictions knowns =
       totalCount = length matches
    in fromIntegral matchCount / fromIntegral totalCount
 
+-- | Convert a DataSet into a list of records for whatever type is relevant.
+getColumn :: Read a => Int -> DS.DataSet -> IO [a]
+getColumn colIndex DS.CSVFile {..} =
+  V.toList . readColumn colIndex (conv hasHeader) <$> BSL.readFile dataPath
+  where
+    conv (DS.HasHeader True) = CSV.HasHeader
+    conv (DS.HasHeader False) = CSV.NoHeader
+
 trainModel :: IO LGBM.Model
 trainModel =
   TMP.withSystemTempFile "filtered_train" $ \trainFile trainHandle -> do
@@ -75,7 +84,7 @@ trainModel =
           case predResults of
             Left e -> error $ "Error preticting results:  " ++ show e
             Right predictionSet -> do
-              predictions <- DS.getColumn 0 predictionSet :: IO [Double]
+              predictions <- getColumn 0 predictionSet :: IO [Double]
               LGBM.writeCsvFile predictionFile predictionSet
 
               valData <- BSL.readFile valFile

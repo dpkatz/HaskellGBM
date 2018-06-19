@@ -5,15 +5,9 @@ module LightGBM.DataSet (
     DataSet (..)
   , HasHeader(..)
   , readCsvFile
-  , writeCsvFile
-  , getColumn) where
+  , writeCsvFile) where
 
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.Csv as CSV
-import qualified Data.Vector as V
 import           System.Directory (copyFile)
-
-import           LightGBM.Utils.Csv (readColumn)
 
 -- N.B.  Right now it's just a data file, but we can add better types
 -- (e.g. some sort of dataframe) as other options as we move forward.
@@ -51,11 +45,3 @@ writeCsvFile ::
   -> DataSet -- ^ The data to persist
   -> IO ()
 writeCsvFile outPath CSVFile {..} = copyFile dataPath outPath
-
--- | Convert a DataSet into a list of records for whatever type is relevant.
-getColumn :: Read a => Int -> DataSet -> IO [a]
-getColumn colIndex CSVFile {..} =
-  V.toList . readColumn colIndex (conv hasHeader) <$> BSL.readFile dataPath
-  where
-    conv (HasHeader True) = CSV.HasHeader
-    conv (HasHeader False) = CSV.NoHeader
