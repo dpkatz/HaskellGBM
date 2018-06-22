@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module LightGBM.DataSet (
@@ -9,10 +10,21 @@ module LightGBM.DataSet (
   , toCSV
   , toFrame) where
 
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Csv as CSV
+import qualified Data.Text as T
+import qualified Data.Vector as V
 import qualified Data.Vinyl.Functor as Vinyl (Identity)
 import qualified Data.Vinyl.TypeLevel as Vinyl (RecAll)
 import qualified Frames as F
-import           Frames.CSV (writeCSV, readTable, ReadRec)
+import           Frames.CSV ( ParserOptions(..)
+                            , ReadRec
+                            , defaultParser
+                            , readTable
+                            , readTableOpt
+                            , writeCSV
+                            )
 import           Frames.InCore (RecVec)
 
 import           System.Directory (copyFile)
@@ -47,7 +59,7 @@ newtype HasHeader = HasHeader
 fromCSV :: HasHeader -> FilePath -> DataSet
 fromCSV = flip CSVFile
 
--- | Load data from a 'Frames.Frame' into a 'DataSet'
+-- | Load data from a 'F.Frame' into a 'DataSet'
 --
 -- Note that this function causes the creation of a file, and it is up
 -- to the caller to control the lifetime of this file.  This function
@@ -58,7 +70,7 @@ fromCSV = flip CSVFile
 -- >   hClose trainHandle
 -- >   dataset <- fromFrame inFrame inputFile
 --
--- where 'inFrame' is the input 'Frames.Frame'.
+-- where 'inFrame' is the input 'F.Frame'.
 fromFrame ::
      ( F.ColumnHeaders ts
      , F.AsVinyl ts
@@ -72,14 +84,18 @@ fromFrame dframe fname = do
   _ <- writeCSV fname dframe
   return $ fromCSV (HasHeader True) fname
 
--- | Write a DataSet out to a CSV file
+-- | Write a 'DataSet' out to a CSV file.
 toCSV ::
      FilePath -- ^ Output path
   -> DataSet -- ^ The data to persist
   -> IO ()
 toCSV outPath CSVFile {..} = copyFile dataPath outPath
 
--- | Convert a DataSet out to a Frame
+-- | Convert a 'DataSet' out to a 'F.Frame'.
+--
+-- If the 'DataSet' doesn't have headers, then 'F.Frame' headers are
+-- generated with names 'column_i' where 'i' is the index of the
+-- column in question (starting at 0).
 --
 -- Note that this function is polymorphic in the row type - the caller
 -- will have to define that explicitly or in context.  (See the
@@ -100,6 +116,40 @@ toCSV outPath CSVFile {..} = copyFile dataPath outPath
 --     return $ length dsf
 -- :}
 -- 5
+--
+-- >>> :{
+--   TMP.withSystemTempFile "toFrameTest" $ \ filepath handle -> do
+--     hPutStrLn handle "1\n2\n3\n4"
+--     hClose handle
+--     let ds = fromCSV (HasHeader False) filepath
+--     dsf <- toFrame ds :: IO (F.Frame (F.Record '["column_0" :-> Int]))
+--     return $ length dsf
+-- :}
+-- 4
 toFrame :: (RecVec rs, ReadRec rs) => DataSet -> IO (F.FrameRec rs)
 toFrame CSVFile {..} =
-  F.inCoreAoS $ readTable dataPath
+  case hasHeader of
+    HasHeader True -> F.inCoreAoS $ readTable dataPath
+    HasHeader False -> do
+      opts <- parseOpts
+      F.inCoreAoS $ readTableOpt opts dataPath
+  where
+    parseOpts :: IO ParserOptions
+    parseOpts = do
+      colNum <- colCount dataPath
+      return
+        defaultParser
+          { headerOverride =
+              Just [T.pack ("column_" ++ show i) | i <- [0 .. (colNum - 1)]]
+          }
+
+    colCount :: FilePath -> IO Int
+    colCount csvfile = do
+      csvdata <- BSL.readFile csvfile
+      let foo =
+            CSV.decode CSV.NoHeader csvdata :: Either String (V.Vector (V.Vector ByteString))
+      case foo of
+        Left err ->
+          error $
+          "Failed to get CSV column count for conversion to Frame:" ++ err
+        Right stuff -> return . V.length . V.head $ stuff
