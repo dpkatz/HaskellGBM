@@ -46,7 +46,7 @@ main = do
         case model of
           Left e -> sayErrShow e
           Right m -> do
-            predResults <- LGBM.predict m [] testData
+            predResults <- LGBM.predict m [] [] testData
             case predResults of
               Left e -> sayErrShow e
               Right preds -> LGBM.toCSV predictionFile preds

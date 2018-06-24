@@ -13,6 +13,7 @@
 module LightGBM.Parameters
   ( -- * Parameters
     Param(..)
+  , PredictionParam(..)
   , Application(..)
   , BinaryClassParam(..)
   , Booster(..)
@@ -108,14 +109,7 @@ data Param
   | QueryColumn ColumnSelector
   | IgnoreColumns [ColumnSelector] -- ^ Select columns to ignore in training
   | CategoricalFeatures [ColumnSelector] -- ^ Select columns to use as features
-  | PredictRawScore Bool -- ^ Prediction Only; true = raw scores only, false = transformed scores
-  | PredictLeafIndex Bool -- ^ Prediction Only
-  | PredictContrib Bool -- ^ Prediction Only
   | BinConstructSampleCount PositiveInt
-  | NumIterationsPredict Natural -- ^ Prediction Only; how many trained predictions
-  | PredEarlyStop Bool
-  | PredEarlyStopFreq Natural
-  | PredEarlyStopMargin Double
   | UseMissing Bool
   | ZeroAsMissing Bool
   | InitScoreFile FilePath
@@ -128,6 +122,16 @@ data Param
   | Metric [Metric] -- ^ Loss Metric
   | MetricFreq PositiveInt
   | TrainingMetric Bool
+  deriving (Eq, Show)
+
+data PredictionParam
+  = PredictRawScore Bool -- ^ True = raw scores only, False = transformed scores
+  | PredictLeafIndex Bool -- ^ True = predict with leaf index
+  | PredictContrib Bool -- ^ True = estimate how each feature contributes to the prediction
+  | NumIterationsPredict Natural -- ^ how many trained iterations are used in prediction
+  | PredEarlyStop Bool -- ^ True = use early stopping on the prediction (may degrade accuracy)
+  | PredEarlyStopFreq Natural
+  | PredEarlyStopMargin Double  -- ??? Should this be a Positive Double?
   deriving (Eq, Show)
 
 data LambdaRankParam

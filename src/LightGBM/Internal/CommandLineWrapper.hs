@@ -207,16 +207,8 @@ mkOptionString (P.IgnoreColumns cs) =
 mkOptionString (P.CategoricalFeatures cs) =
   let prefix = colSelPrefix (head cs)
   in ["categorical_feature=" ++ prefix ++ intercalate "," (map P.colSelArgument cs)]
-mkOptionString (P.PredictRawScore b) = ["predict_raw_score=" ++ show b]
-mkOptionString (P.PredictLeafIndex b) = ["predict_leaf_index=" ++ show b]
-mkOptionString (P.PredictContrib b) = ["predict_contrib=" ++ show b]
 mkOptionString (P.BinConstructSampleCount n) =
   ["bin_construct_sample_cnt=" ++ show (unrefine n)]
-mkOptionString (P.NumIterationsPredict n) =
-  ["num_iterations_predict=" ++ show n]
-mkOptionString (P.PredEarlyStop b) = ["pred_early_stop=" ++ show b]
-mkOptionString (P.PredEarlyStopFreq n) = ["pred_early_stop_freq=" ++ show n]
-mkOptionString (P.PredEarlyStopMargin d) = ["pred_early_stop_margin=" ++ show d]
 mkOptionString (P.UseMissing b) = ["use_missing=" ++ show b]
 mkOptionString (P.ZeroAsMissing b) = ["zero_as_missing=" ++ show b]
 mkOptionString (P.InitScoreFile f) = ["init_score_file=" ++ f]
@@ -243,6 +235,15 @@ mkOptionString (P.MetricFreq f) = ["metric_freq=" ++ show (unrefine f)]
 mkOptionString (P.TrainingMetric b) =
   ["training_metric=" ++ fmap toLower (show b)]
 
+mkPredParamString :: P.PredictionParam -> [String]
+mkPredParamString (P.PredictRawScore b) = ["predict_raw_score=" ++ show b]
+mkPredParamString (P.PredictLeafIndex b) = ["predict_leaf_index=" ++ show b]
+mkPredParamString (P.PredictContrib b) = ["predict_contrib=" ++ show b]
+mkPredParamString (P.NumIterationsPredict n) = ["bin_construct_sample_cnt=" ++ show n]
+mkPredParamString (P.PredEarlyStop b) = ["pred_early_stop=" ++ show b]
+mkPredParamString (P.PredEarlyStopFreq n) = ["pred_early_stop_freq=" ++ show n]
+mkPredParamString (P.PredEarlyStopMargin d) = ["pred_early_stop_margin=" ++ show d]
+
 mkCliOptionString :: CLIP.CommandLineParam -> [String]
 mkCliOptionString (CLIP.ConfigFile f) = ["config=" ++ show f]
 mkCliOptionString (CLIP.Header b) = ["header=" ++ show b]
@@ -261,20 +262,26 @@ mkCliOptionString (CLIP.Task t) =
 run ::
      FilePath -- ^ The path to the lightgbm executable
   -> [P.Param] -- ^ A list of parameters to override defaults
+  -> [P.PredictionParam]     -- ^ a list of prediction-only parameters
   -> [CLIP.CommandLineParam] -- ^ A list of command-line specific parameters
   -> IO (Either ErrLog OutLog)
-run executable params cliParams = do
+run executable params predParams cliParams = do
   hasLightGBM <- findExecutable executable
   case hasLightGBM of
     Nothing -> fail "Couldn't find the 'lightgbm' executable on the PATH."
     Just _ -> do
       let optStrings = concatMap mkOptionString params
           cliOptStrings = concatMap mkCliOptionString cliParams
-          lgbmProc = S.proc executable (optStrings ++ cliOptStrings)
+          predOptStrings = concatMap mkPredParamString predParams
+          lgbmProc =
+            S.proc
+              executable
+              (concat [optStrings, predOptStrings, cliOptStrings])
       (exitcode, out, err) <-
         S.readProcess (S.setStdin (S.byteStringInput "") lgbmProc)
       case exitcode of
-        ExitSuccess -> return $ Right . OutLog . TE.decodeUtf8 . BSL.toStrict $ out
+        ExitSuccess ->
+          return $ Right . OutLog . TE.decodeUtf8 . BSL.toStrict $ out
         ExitFailure code -> do
           let reason = F.sformat ("lightGBM failed with code : " F.% F.int) code
               errlog = TE.decodeUtf8 . BSL.toStrict $ err

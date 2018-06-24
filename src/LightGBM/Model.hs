@@ -46,7 +46,7 @@ trainNewModel trainingParams trainingData validationData = do
           then []
           else [P.OutputModel modelOutputPath]
   runlog <-
-    CLW.run lightgbmExe (runParams ++ trainingParams) (dataParams ++ taskParams)
+    CLW.run lightgbmExe (runParams ++ trainingParams) [] (dataParams ++ taskParams)
   return $ either Left (\_ -> Right $ Model modelOutputPath) runlog
   where
     isOutputModelParam (P.OutputModel _) = True
@@ -73,22 +73,27 @@ readModelFile = return . Model
 -- output file.
 predict ::
      Model -- ^ A model to do prediction with
-  -> [P.Param] -- ^ Prediction parameters
+  -> [P.Param] -- ^ Parameters
+  -> [P.PredictionParam]
   -> DS.DataSet -- ^ The new input data for prediction
   -> IO (Either ErrLog DS.DataSet) -- ^ The prediction output DataSet
-predict model predParams inputData = do
-  predictionOutputPath <- getOutputPath predParams
+predict model genericParams predParams inputData = do
+  predictionOutputPath <- getOutputPath genericParams
   let dataParams = [CLIP.Header (DS.getHeader . DS.hasHeader $ inputData)]
       taskParams = [CLIP.Task CLIP.Predict]
       runParams =
         [ P.InputModel $ modelPath model
         , P.PredictionData $ DS.dataPath inputData
         ] ++
-        if hasOutputParam predParams
+        if hasOutputParam genericParams
           then []
           else [P.OutputResult predictionOutputPath]
   runResults <-
-    CLW.run lightgbmExe (predParams ++ runParams) (dataParams ++ taskParams)
+    CLW.run
+      lightgbmExe
+      (genericParams ++ runParams)
+      predParams
+      (dataParams ++ taskParams)
   return $
     either
       Left

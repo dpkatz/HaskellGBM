@@ -80,7 +80,7 @@ trainModel =
         Right m -> do
           _ <- LGBM.writeModelFile modelFile m
 
-          predResults <- LGBM.predict m [] validationData
+          predResults <- LGBM.predict m [] [] validationData
           case predResults of
             Left e -> error $ "Error preticting results:  " ++ show e
             Right predictionSet -> do
@@ -104,7 +104,7 @@ main = do
           hClose testHandle
           TMP.withSystemTempFile "predictions" $ \predFile predHandle -> do
             hClose predHandle
-            predResults <- LGBM.predict m [] (loadData testFile)
+            predResults <- LGBM.predict m [] [] (loadData testFile)
             case predResults of
               Left e -> error $ "Error predicting final results:  " ++ show e
               Right predValues -> do
