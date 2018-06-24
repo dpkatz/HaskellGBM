@@ -116,7 +116,7 @@ mkGossString :: P.GOSSParam -> String
 mkGossString (P.TopRate b) = "top_rate=" ++ show (unrefine b)
 mkGossString (P.OtherRate b) = "other_rate=" ++ show (unrefine b)
 
-colSelPrefix :: P.ColumnSelector -> String
+colSelPrefix :: P.ColumnSelector a -> String
 colSelPrefix (P.Index _) = ""
 colSelPrefix (P.ColName _) = "name:"
 

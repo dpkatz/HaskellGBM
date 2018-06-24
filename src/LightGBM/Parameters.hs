@@ -45,6 +45,7 @@ module LightGBM.Parameters
   ) where
 
 import Data.Hashable (Hashable)
+import Data.Int (Int32)
 import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 
@@ -104,11 +105,11 @@ data Param
   | TwoRoundLoading Bool
   | SaveBinary Bool
   | Verbosity VerbosityLevel
-  | LabelColumn ColumnSelector -- ^ Which column has the labels
-  | WeightColumn ColumnSelector -- ^ Which column has the weights
-  | QueryColumn ColumnSelector
-  | IgnoreColumns [ColumnSelector] -- ^ Select columns to ignore in training
-  | CategoricalFeatures [ColumnSelector] -- ^ Select columns to use as features
+  | LabelColumn (ColumnSelector Natural) -- ^ Which column has the labels
+  | WeightColumn (ColumnSelector Natural) -- ^ Which column has the weights
+  | QueryColumn (ColumnSelector Natural)
+  | IgnoreColumns [(ColumnSelector Natural)] -- ^ Select columns to ignore in training
+  | CategoricalFeatures [(ColumnSelector Int32)] -- ^ Select columns to use as features
   | BinConstructSampleCount PositiveInt
   | UseMissing Bool
   | ZeroAsMissing Bool
@@ -309,11 +310,11 @@ instance Hashable GOSSParam
 
 -- | Some parameters are based on column selection either by index or
 -- by name.  A 'ColumnSelector' encapsulates this flexibility.
-data ColumnSelector
-  = Index Natural
+data ColumnSelector a
+  = Index a
   | ColName String
   deriving (Eq, Show)
 
-colSelArgument :: ColumnSelector -> String
+colSelArgument :: Show a => ColumnSelector a -> String
 colSelArgument (Index i) = show i
 colSelArgument (ColName s) = s
