@@ -37,6 +37,13 @@ dependencies:
 - vector
 - vinyl
 
+ghc-options:
+- -Wall  
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns  
+- -Werror
+
 library:
   source-dirs: src
 

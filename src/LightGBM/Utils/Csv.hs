@@ -35,8 +35,7 @@ readColumn index headerStatus csvData =
 
 type RawCSV = V.Vector (V.Vector BSL.ByteString)
 filterColumns ::
-     Foldable t
-  => (Int -> t Int -> Bool)
+     (Int -> t Int -> Bool)
   -> t Int
   -> BSL.ByteString
   -> BSL.ByteString
