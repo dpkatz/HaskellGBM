@@ -38,10 +38,10 @@ dependencies:
 - vinyl
 
 ghc-options:
-- -Wall  
+- -Wall
 - -Wcompat
 - -Wincomplete-record-updates
-- -Wincomplete-uni-patterns  
+- -Wincomplete-uni-patterns
 - -Werror
 
 library:
@@ -97,7 +97,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - HaskellGBM
-        
+
   Titanic-example:
     main: Main.hs
     source-dirs: examples/titanic
@@ -118,4 +118,4 @@ tests:
     dependencies:
     - doctest
     - Glob
-    
+
