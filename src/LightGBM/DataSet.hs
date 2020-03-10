@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -15,8 +16,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Csv as CSV
 import qualified Data.Text as T
 import qualified Data.Vector as V
-import qualified Data.Vinyl.Functor as Vinyl (Identity)
-import qualified Data.Vinyl.TypeLevel as Vinyl (RecAll)
+import           Data.Vinyl (RecMapMethod, RecordToList, RMap)
 import qualified Frames as F
 import           Frames.CSV ( ParserOptions(..)
                             , ReadRec
@@ -26,6 +26,7 @@ import           Frames.CSV ( ParserOptions(..)
                             , writeCSV
                             )
 import           Frames.InCore (RecVec)
+import           Frames.ShowCSV (ShowCSV)
 
 import           System.Directory (copyFile)
 
@@ -73,9 +74,9 @@ fromCSV = flip CSVFile
 -- where 'inFrame' is the input 'F.Frame'.
 fromFrame ::
      ( F.ColumnHeaders ts
-     , F.AsVinyl ts
+     , RecordToList ts
      , Foldable f
-     , Vinyl.RecAll Vinyl.Identity (F.UnColumn ts) Show
+     , RecMapMethod ShowCSV F.ElField ts
      )
   => f (F.Record ts)
   -> FilePath
@@ -126,7 +127,7 @@ toCSV outPath CSVFile {..} = copyFile dataPath outPath
 --     return $ length dsf
 -- :}
 -- 4
-toFrame :: (RecVec rs, ReadRec rs) => DataSet -> IO (F.FrameRec rs)
+toFrame :: (RMap rs, RecVec rs, ReadRec rs) => DataSet -> IO (F.FrameRec rs)
 toFrame CSVFile {..} =
   case hasHeader of
     HasHeader True -> F.inCoreAoS $ readTable dataPath
