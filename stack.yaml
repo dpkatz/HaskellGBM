@@ -39,9 +39,9 @@ packages:
 - .
 
 extra-deps:
-- Frames-0.6.2
-- refined-0.4.4
-- discrimination-0.4
+- Frames-0.6.2@sha256:bb5d8dbea84184f1c26d9eb2a4cb8caeb5910eba2d2b787096de9d829c9a0457,8795
+- discrimination-0.4@sha256:d42ae36c97ea9c0c8844b47ee162c5530f3daf708636f01010f58dcf52602876,2571
+- refined-0.4.4@sha256:c387bd725ecb18f8ec93b2271b53604f2ed70f7e2fc548dc5f2f1991d4cd9ee0,2776
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

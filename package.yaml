@@ -26,9 +26,9 @@ dependencies:
 - directory
 - filepath
 - formatting
-- Frames
+- Frames >= 0.6.1
 - hashable
-- refined
+- refined >= 0.4.4
 - say
 - temporary
 - text

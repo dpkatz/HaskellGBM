@@ -11,7 +11,6 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Csv ((.:), (.=))
 import qualified Data.Csv as CSV
 import qualified Data.Foldable as Foldable
-import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
